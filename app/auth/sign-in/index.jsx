@@ -25,7 +25,7 @@ return;
     .catch((error) => {
       const errorCode = error.code;
       const errorMessage = error.message;
-      console.log(errorMessage, errorCodes)
+     
 if (errorCode=='auth/invalid-credential'){
     ToastAndroid.show('Invalid Email or Password', ToastAndroid.LONG)
 }

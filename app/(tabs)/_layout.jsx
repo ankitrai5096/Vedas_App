@@ -18,7 +18,10 @@ const tabLayout = () => {
           tabBarIcon: ({ color }) => <Ionicons name="people" size={24} color={color} /> 
         }} />
 
-
+<Tabs.Screen name="createChat"
+        options={{
+          tabBarIcon: ({ color }) => <Ionicons name="person-circle" size={24} color={color} />
+        }} />
 
       <Tabs.Screen name="Chat"
         options={{
@@ -30,6 +33,11 @@ const tabLayout = () => {
         options={{
           tabBarIcon: ({ color }) => <Ionicons name="person-circle" size={24} color={color} />
         }} />
+
+
+
+
+
     </Tabs>
   )
 }

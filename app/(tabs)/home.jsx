@@ -1,115 +1,181 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
-import { getAuth } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Button, Image } from 'react-native';
+import { collection, query, orderBy, onSnapshot, updateDoc, doc, arrayUnion, getDoc } from 'firebase/firestore';
 import { db } from './../../Configs/FirebaseConfig';
-import { Colors } from './../../constants/Colors'
+import { getAuth } from 'firebase/auth';
+import { Colors } from './../../constants/Colors';
 
-const home = () => {
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+const PostFeedScreen = () => {
+  const [posts, setPosts] = useState([]);
+  const [comment, setComment] = useState('');
+
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        // Get current user
-        const auth = getAuth();
-        const user = auth.currentUser;
+    const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+      const postsData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setPosts(postsData);
+    });
 
-        if (user) {
-          // Get user's Firestore document
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-
-          if (userDoc.exists()) {
-            setUserData(userDoc.data());
-          } else {
-            console.log('No such document!');
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
+    return () => unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.Primary} />
-      </View>
-    );
-  }
+  const handleLike = async (postId) => {
+    try {
+      const postRef = doc(db, 'posts', postId);
+      await updateDoc(postRef, {
+        likes: arrayUnion(currentUser.uid),
+      });
+    } catch (error) {
+      console.error('Error liking post: ', error);
+    }
+  };
 
-  if (!userData) {
+  const handleComment = async (postId) => {
+    if (comment.trim()) {
+      try {
+        const postRef = doc(db, 'posts', postId);
+        await updateDoc(postRef, {
+          comments: arrayUnion({ userId: currentUser.uid, text: comment.trim(), createdAt: new Date() }),
+        });
+        setComment('');
+      } catch (error) {
+        console.error('Error commenting on post: ', error);
+      }
+    }
+  };
+
+  const handleVote = async (postId, optionIndex) => {
+    try {
+      const postRef = doc(db, 'posts', postId);
+      const postDoc = await getDoc(postRef);
+      const postData = postDoc.data();
+
+      // Check if the user has already voted
+      const hasVoted = postData.pollOptions.some((option) =>
+        option.votes.includes(currentUser.uid)
+      );
+
+      if (!hasVoted) {
+        const updatedPollOptions = postData.pollOptions.map((option, index) => {
+          if (index === optionIndex) {
+            return { ...option, votes: [...option.votes, currentUser.uid] };
+          }
+          return option;
+        });
+
+        await updateDoc(postRef, { pollOptions: updatedPollOptions });
+      } else {
+        alert("You've already voted.");
+      }
+    } catch (error) {
+      console.error('Error voting in poll: ', error);
+    }
+  };
+
+  const renderPost = ({ item }) => {
     return (
-      <View style={styles.container}>
-        <Text style={styles.text}>No user data found</Text>
+      <View style={styles.postContainer}>
+        <View style={styles.userInfo}>
+          <Image source={{ uri: item.userProfileImage }} style={styles.profileImage} />
+          <View>
+            <Text style={styles.userName}>{item.userName}</Text>
+            <Text style={styles.userFlat}>{item.userFlat}</Text>
+          </View>
+        </View>
+        <Text style={styles.content}>{item.content}</Text>
+        {item.pollOptions && (
+          <View style={styles.pollContainer}>
+            {item.pollOptions.map((option, index) => (
+              <TouchableOpacity key={index} onPress={() => handleVote(item.id, index)}>
+                <Text style={styles.pollOption}>{option.text}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        <View style={styles.interactionContainer}>
+          <TouchableOpacity onPress={() => handleLike(item.id)}>
+            <Text style={styles.likeText}>Like</Text>
+          </TouchableOpacity>
+          <TextInput
+            placeholder="Add a comment"
+            value={comment}
+            onChangeText={setComment}
+            style={styles.commentInput}
+          />
+          <Button title="Post" onPress={() => handleComment(item.id)} />
+        </View>
       </View>
     );
-  }
+  };
 
   return (
-    <View style={styles.container}>
-
-
-      <View style={{ alignItems: 'center', backgroundColor: Colors.Primary, flexDirection: 'row', justifyContent: 'left', }}>
-        <Image style={{ width: 70, height: 70, borderRadius: 35, marginLeft: 30, marginTop: 60, }}
-          source={require('./../../assets/images/profile-1.jpeg')}
-
-        />
-
-        <View style={{ padding: 30, marginTop: 10, borderRadius: 15, gap: 2, marginTop: 60, }}>
-          <Text style={styles.title}>{userData.fullName}</Text>
-          <Text style={styles.text}>Flat No: {userData.flat}</Text>
-        </View>
-
-      </View>
-
-      <View style={{width:'100%', height:200, backgroundColor:Colors.Gray, opacity:0.2, marginTop:20, padding:40}}>
-        <Text>Hello</Text>
-      </View>
-
-      <View style={{width:'100%', height:200, backgroundColor:Colors.Gray, opacity:0.2, marginTop:20, padding:40}}>
-        <Text>Hello</Text>
-      </View>
-
-      <View style={{width:'100%', height:200, backgroundColor:Colors.Gray, opacity:0.2, marginTop:20, padding:40}}>
-        <Text>Hello</Text>
-      </View>
-
-
-    </View>
+    <FlatList
+      data={posts}
+      keyExtractor={(item) => item.id}
+      renderItem={renderPost}
+    />
   );
 };
 
-export default home;
-
 const styles = StyleSheet.create({
-  container: {
-
-
+  postContainer: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    backgroundColor: Colors.Primary,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  userInfo: {
+    flexDirection: 'row',
     alignItems: 'center',
-
+    marginBottom: 8,
   },
-  title: {
-    color: Colors.white,
-    fontFamily: 'outfit-bold',
-    fontSize: 18,
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 8,
   },
-
-  text: {
-    color: Colors.white,
-    fontFamily: 'outfit-regular',
+  userName: {
+    fontWeight: 'bold',
+  },
+  userFlat: {
+    fontSize: 12,
+    color: '#888',
+  },
+  content: {
     fontSize: 16,
-    opacity: 0.8,
-
+    marginBottom: 8,
+  },
+  pollContainer: {
+    marginBottom: 8,
+  },
+  pollOption: {
+    padding: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+    marginVertical: 4,
+  },
+  interactionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  likeText: {
+    marginRight: 16,
+    color: '#1E90FF',
+  },
+  commentInput: {
+    flex: 1,
+    borderBottomWidth: 1,
+    marginBottom: 8,
+    marginHorizontal: 8,
+    padding: 4,
   },
 });
+
+export default PostFeedScreen;
