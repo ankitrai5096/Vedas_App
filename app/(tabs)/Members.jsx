@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Image, FlatList } from 'react-native';
 import { getAuth } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from './../../Configs/FirebaseConfig';
-import { Colors } from './../../constants/Colors';
+import { db } from '../../Configs/FirebaseConfig';
+import { Colors } from '../../constants/Colors';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 const Profile = () => {
@@ -89,6 +89,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.Primary,
     padding: 10,
+   
 
   },
   loadingContainer: {
@@ -109,6 +110,7 @@ const styles = StyleSheet.create({
     gap: 20,
     backgroundColor: Colors.white,
     opacity: 0.95,
+    width:'98%',
   },
 
   profileImage: {

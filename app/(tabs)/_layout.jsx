@@ -13,14 +13,14 @@ const tabLayout = () => {
         }} />
 
 
-      <Tabs.Screen name="Notification"
+      <Tabs.Screen name="Members"
         options={{
           tabBarIcon: ({ color }) => <Ionicons name="people" size={24} color={color} /> 
         }} />
 
-<Tabs.Screen name="createChat"
+<Tabs.Screen name="Post"
         options={{
-          tabBarIcon: ({ color }) => <Ionicons name="person-circle" size={24} color={color} />
+          tabBarIcon: ({ color }) => <Ionicons name="add" size={34} color="black" />
         }} />
 
       <Tabs.Screen name="Chat"

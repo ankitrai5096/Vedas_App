@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ToastAndroid } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigation } from 'expo-router';
 import { Colors } from './../../../constants/Colors';
 import { useRouter } from 'expo-router';
@@ -7,7 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from './../../../Configs/FirebaseConfig';
 import { doc, setDoc } from 'firebase/firestore'; // Import Firestore methods
-import { ScrollView } from 'react-native-gesture-handler';
+import { ScrollView,GestureHandlerRootView } from 'react-native-gesture-handler';
+
 
 const SignUp = () => {
     const router = useRouter();
@@ -56,6 +57,7 @@ const SignUp = () => {
     };
 
     return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
         <View style={{ marginTop: 50, height: '100%', padding: 30, backgroundColor: Colors.white }}>
             
             <Ionicons onPress={() => router.back()} name="arrow-back-circle-outline" size={30} color="black" />
@@ -125,6 +127,7 @@ const SignUp = () => {
                 </Text>
             </TouchableOpacity>
         </View>
+         </GestureHandlerRootView>
     );
 };
 

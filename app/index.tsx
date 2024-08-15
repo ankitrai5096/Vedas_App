@@ -9,7 +9,7 @@ export default function Index() {
     <View>
 
       {user ?
-        <Redirect href={'home'} /> :
+        <Redirect href={'/home'} /> :
         <Login />
       }
 
