@@ -7,13 +7,13 @@ import {Colors} from './../../constants/Colors'
 const tabLayout = () => {
   return (
     <Tabs  screenOptions={{ headerShown: false, tabBarActiveTintColor:Colors.Primary }}>
-      <Tabs.Screen name="home"
+      <Tabs.Screen name="home" 
         options={{
           tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />
         }} />
 
 
-      <Tabs.Screen name="Members"
+      <Tabs.Screen name="Books"
         options={{
           tabBarIcon: ({ color }) => <Ionicons name="people" size={24} color={color} /> 
         }} />
@@ -23,7 +23,7 @@ const tabLayout = () => {
           tabBarIcon: ({ color }) => <Ionicons name="add" size={34} color="black" />
         }} />
 
-      <Tabs.Screen name="Chat"
+      <Tabs.Screen name="Members"
         options={{
           tabBarIcon: ({ color }) => <Ionicons name="chatbubble" size={24} color={color} /> 
         }} />

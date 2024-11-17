@@ -1,133 +1,133 @@
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Image, FlatList } from 'react-native';
-import { getAuth } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../Configs/FirebaseConfig';
+import { StatusBar } from 'expo-status-bar';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { ChevronLeftIcon, ClockIcon, FireIcon } from 'react-native-heroicons/outline';
+import Loading from '../../components/Loading';
+import { useRoute } from '@react-navigation/native';
+import { useNavigation } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import Ionicons from '@expo/vector-icons/Ionicons';
 
-const Profile = () => {
-  const [usersData, setUsersData] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Members() {
+    const navigation = useNavigation();
+    const route = useRoute();
+    const { item } = route.params;
+    // console.log("route params", route.params)
+    // console.log("item", item)
+    const [book, setBook] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUsersData = async () => {
-      try {
-        // Fetch all users' documents from Firestore
-        const usersCollection = collection(db, 'users');
-        const userDocsSnapshot = await getDocs(usersCollection);
-
-        if (!userDocsSnapshot.empty) {
-          // Extract user data from each document
-          const users = userDocsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setUsersData(users);
-        } else {
-          console.log('No users found!');
-        }
-      } catch (error) {
-        console.error('Error fetching users data:', error);
-      } finally {
+    useEffect(() => {
         setLoading(false);
-      }
-    };
+        setBook(item);
+    }, []);
 
-    fetchUsersData();
-  }, []);
-
-  if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.Primary} />
-      </View>
-    );
-  }
+        <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollViewContent}
+            style={styles.container}
+        >
+            <StatusBar style="light" />
 
-  return (
-    <View style={styles.container}>
-      <FlatList style={{marginTop:50,}}
-        data={usersData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-
-
-          <View style={styles.userContainer}>
-
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Image
-                style={styles.profileImage}
-                source={require('./../../assets/images/profile-1.jpeg')} // Replace with your user's image source
-              />
-              <View style={styles.userInfo}>
-
-                <Text style={styles.text}>{item.fullName}</Text>
-
-                <Text style={styles.text}>Flat No: {item.flat}</Text>
-
-
-              </View>
-
+            {/* Book Image */}
+            <View style={styles.imageContainer}>
+                <Image
+                    source={{ uri: book?.thumbnail }}
+                    style={styles.recipeImage}
+                />
             </View>
 
+            {/* Back Button */}
+            <View style={styles.backButtonContainer}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <ChevronLeftIcon size={hp(3.5)} strokeWidth={4.5} color="#fbbf24" />
+                </TouchableOpacity>
+            </View>
+
+            {loading ? (
+                <Loading size="large" />
+            ) : book ? (
+                <View style={{ paddingHorizontal: wp(4), flexDirection: 'column', justifyContent: 'space-between', paddingVertical: hp(3) }}>
+                    {/* Name and Author */}
+                    <View style={{ marginBottom: hp(2) }}>
+                        <Text style={{ fontSize: hp(3), fontWeight: 'bold', flex: 1, color: '#374151' }}>
+                            {book?.bookName}
+                        </Text>
+                        <Text style={{ fontSize: hp(2), fontWeight: '500', flex: 1, color: '#6B7280' }}>
+                            {book?.bookAuthor}
+                        </Text>
+                    </View>
+
+                    {/* Book Summary */}
+                    <View style={{ marginVertical: hp(2) }}>
+                        <Text style={{ fontSize: hp(2.5), fontWeight: 'bold', flex: 1, color:'black' }}>
+                            Book Summary
+                        </Text>
+                        <Text style={{ fontSize: hp(1.9), fontWeight: 'semibold', flex: 1, color: '#4B5563' }}>
+                            {book?.BookSummary}
+                        </Text>
+                    </View>
+
+                    {/* Book Details */}
+                    <View style={{ marginVertical: hp(2) }}>
+                        <Text style={{ fontSize: hp(2.5), fontWeight: 'bold', flex: 1, color: '#4B5563' }}>
+                            Book Details
+                        </Text>
+                        <Text style={{ fontSize: hp(1.9), fontWeight: 'semibold', flex: 1, color: '#4B5563' }}>
+                            {book?.BookDetail}
+                        </Text>
+                    </View>
+                    <TouchableOpacity style={styles.button}>
+                        <Text style={styles.buttonText} >Start Reading</Text>
+                    </TouchableOpacity>
+                </View>
 
 
-
-            <Ionicons name="notifications-circle-sharp" size={28} color="black" />
-          </View>
-        )}
-      />
-    </View>
-  );
-};
-
-export default Profile;
+            ) : (
+                <Text>No book data available</Text>
+            )}
+        </ScrollView>
+    );
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.Primary,
-    padding: 10,
-   
-
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-
-  },
-  userContainer: {
-
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: 400,
-    padding: 10,
-    marginTop: 10,
-    borderRadius: 15,
-    gap: 20,
-    backgroundColor: Colors.white,
-    opacity: 0.95,
-    width:'98%',
-  },
-
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: Colors.white,
-  },
-  userInfo: {
-
-  },
-  text: {
-
-    borderRadius: 15,
-    fontSize: 18,
-    fontFamily: 'outfit-regular',
-    color: Colors.black,
-  },
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    scrollViewContent: {
+        paddingBottom: 30,
+    },
+    imageContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    recipeImage: {
+        width: wp(98),
+        height: hp(50),
+        borderBottomLeftRadius: 40,
+        borderBottomRightRadius: 40,
+    },
+    backButtonContainer: {
+        width: '100%',
+        position: 'absolute',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: 45,
+        paddingLeft: 20,
+    },
+    button: {
+        color: Colors.white,
+        padding: 20,
+        backgroundColor: '#FF671F',
+        borderRadius: 10,
+        marginTop: 25,
+        width: '50%'
+    },
+    buttonText: {
+        color: Colors.white,
+fontSize:16
+    }
 });

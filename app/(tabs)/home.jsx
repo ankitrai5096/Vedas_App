@@ -1,238 +1,376 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Button, Image } from 'react-native';
-import { collection, query, orderBy, onSnapshot, updateDoc, doc, arrayUnion, getDoc } from 'firebase/firestore';
-import { db } from './../../Configs/FirebaseConfig';
-import { getAuth } from 'firebase/auth';
-import { Colors } from './../../constants/Colors';
-import { useNavigation } from 'expo-router';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { View, Text, ScrollView, Image, StyleSheet, TextInput, Modal, TouchableWithoutFeedback } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { BellIcon, MagnifyingGlassIcon } from 'react-native-heroicons/outline';
+import Categories from '../../components/Categories';
+import axios from 'axios';
+import RecommnededBooks from '../../components/RecommnededBooks';
+import { collection, getDoc,doc, getDocs,query, where } from 'firebase/firestore';
+import { auth, db } from '../../Configs/FirebaseConfig';
+import { Video } from 'expo-av';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const PostFeedScreen = () => {
-  const [posts, setPosts] = useState([]);
-  const [comment, setComment] = useState({});
-  const [userVotes, setUserVotes] = useState({});
-  const navigation = useNavigation();
+export default function HomeScreen() {
 
-  const auth = getAuth();
-  const currentUser = auth.currentUser;
+  const [categories, setCategories] = useState([]);
+  const [meals, setMeals] = useState([]);
+  const [user, setUser] = useState({});
+  const [categoriesData, setCategoriesData] = useState([]);
+  const [books, setBooks] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playerRef = useRef(null);
 
+  const toggleModal = () => {
+    setIsModalVisible(!isModalVisible);
+    setIsPlaying(false); 
+  };
+
+  
   useEffect(() => {
-    navigation.setOptions({
-      headerShown: true,
-      headerTitle: 'Home',
-    });
+    fetchUser();
+    fetchCategories();
+    fetchBooksByCategory();
+  }, [2]);
 
-    const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
-      const postsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      console.log('Fetched posts data:', postsData); // Debugging line
-      setPosts(postsData);
-    });
+  handleChangeCategory = category => {
+    fetchBooksByCategory(category);
+    setActiveCategory(category);
+    setBooks([]);
+  
+  }
 
-    return () => unsubscribe();
-  }, []);
+  handlePlayIconPress = category =>{
+    console.log("icon is pressed")
+    toggleModal();
+  }
+const fetchUser = async () => {
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      const userDocRef = doc(db, 'users', user.uid); 
+      const querySnapshot = await getDoc(userDocRef); 
 
-  const generateAvatarUrl = (fullName) => {
-    if (!fullName || typeof fullName !== 'string') {
-      console.error('Invalid fullName provided:', fullName);
-      return 'https://api.dicebear.com/6.x/initials/png?seed=Unknown'; // Fallback to default initials
-    }
-
-    const initials = fullName
-      .trim()
-      .split(/\s+/)
-      .map(name => name.charAt(0).toUpperCase())
-      .join('');
-
-    const finalInitials = initials.length === 1 ? initials + initials : initials;
-    console.log('Generated Initials:', finalInitials);
-    const url = `https://api.dicebear.com/6.x/initials/png?seed=${finalInitials}`;
-    console.log('Generated Avatar URL:', url);
-
-    return url;
-  };
-
-  const handleLike = async (postId) => {
-    try {
-      const postRef = doc(db, 'posts', postId);
-      await updateDoc(postRef, {
-        likes: arrayUnion(currentUser.uid),
-      });
-    } catch (error) {
-      console.error('Error liking post: ', error);
-    }
-  };
-
-  const handleComment = async (postId) => {
-    if (comment[postId]?.trim()) {
-      try {
-        const postRef = doc(db, 'posts', postId);
-        await updateDoc(postRef, {
-          comments: arrayUnion({ userId: currentUser.uid, text: comment[postId].trim(), createdAt: new Date() }),
-        });
-        setComment((prev) => ({ ...prev, [postId]: '' }));
-      } catch (error) {
-        console.error('Error commenting on post: ', error);
-      }
-    }
-  };
-
-  const handleVote = async (postId, optionIndex) => {
-    try {
-      const postRef = doc(db, 'posts', postId);
-      const postDoc = await getDoc(postRef);
-      const postData = postDoc.data();
-
-      const hasVoted = postData.pollOptions.some((option) =>
-        option.votes.includes(currentUser.uid)
-      );
-
-      if (!hasVoted) {
-        const updatedPollOptions = postData.pollOptions.map((option, index) => {
-          if (index === optionIndex) {
-            return { ...option, votes: [...option.votes, currentUser.uid], voteCount: (option.voteCount || 0) + 1 };
-          }
-          return option;
-        });
-
-        await updateDoc(postRef, { pollOptions: updatedPollOptions });
-        setUserVotes((prev) => ({ ...prev, [postId]: optionIndex }));
+      if (querySnapshot.exists()) {
+        const userData = querySnapshot.data(); 
+        setUser(userData);
       } else {
-        alert("You've already voted.");
+        console.log('No such document!');
       }
-    } catch (error) {
-      console.error('Error voting in poll: ', error);
+    } else {
+      console.log('No user is logged in.');
     }
-  };
-
-  const renderPost = ({ item }) => {
-    const votedOptionIndex = userVotes[item.id];
-    const hasUserVoted = votedOptionIndex !== undefined;
-
-    return (
-      <View style={{ flexDirection: 'column', justifyContent: 'center', alignItems: 'center', }}>
-        <View style={styles.postContainer}>
-          <View style={styles.userInfo}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, }}>
-              <View>
-                <Image
-                  source={{ uri: item.userProfileImage || generateAvatarUrl(item.userFullName || 'Unknown User') }}
-                  style={styles.profileImage}
-                  onError={(error) => {
-                    console.error('Failed to load image:', error.nativeEvent.error);
-                  }}
-                  defaultSource={{ uri: 'https://via.placeholder.com/40' }} // Fallback image
-                />
-              </View>
-              <Text style={styles.userName}>{item.userFullName || 'Unknown User'}</Text>
-            </View>
-          </View>
-          <Text style={styles.content}>{item.content || ''}</Text>
-
-          {item.pollOptions && item.pollOptions.length > 0 && (
-            <View style={styles.pollContainer}>
-              {item.pollOptions.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => !hasUserVoted && handleVote(item.id, index)}
-                  style={[
-                    styles.pollOption,
-                    votedOptionIndex === index && styles.votedPollOption
-                  ]}
-                  disabled={hasUserVoted} // Disable button if user has already voted
-                >
-                  <Text style={styles.pollOptionText}>
-                    {option.text || ''} - {option.voteCount || 0} votes
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-      </View>
-    );
-  };
-
-  return (
-    <FlatList
-      data={posts}
-      keyExtractor={(item) => item.id}
-      renderItem={renderPost}
-    />
-  );
+  } catch (error) {
+    console.error('Error fetching users: ', error);
+  }
 };
 
+
+
+
+
+const fetchCategories = async () => {
+  try {
+    const storiesCategoryRef = collection(db, 'categories', 'MNfBRAvIBxnjZLxklVuQ', 'storiesCategory');
+    
+    const querySnapshot = await getDocs(storiesCategoryRef); 
+
+    if (querySnapshot.empty) {
+      console.log('No documents found in the storiesCategory collection!');
+      return;
+    }
+
+    const categoriesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    setCategoriesData(categoriesData);
+
+  } catch (error) {
+    console.error('Error fetching categories: ', error);
+  }
+};
+
+
+
+const fetchBooksByCategory = async (category) => {
+  try {
+    const categoriesRef = collection(db, 'categories', 'MNfBRAvIBxnjZLxklVuQ', 'storiesCategory');
+
+    const categoryQuery = query(categoriesRef, where('strCategory', '==', category)); 
+
+    const categorySnapshot = await getDocs(categoryQuery);
+
+    if (categorySnapshot.empty) {
+      console.log(`No category found for '${category}'`);
+      return;
+    }
+
+    // Fetch books for the selected category
+    categorySnapshot.forEach(async (categoryDoc) => {
+      console.log('Category Found:', categoryDoc.id, categoryDoc.data());
+
+      const booksRef = collection(db, 'categories', 'MNfBRAvIBxnjZLxklVuQ', 'storiesCategory', categoryDoc.id, 'Books');
+      const booksSnapshot = await getDocs(booksRef);
+
+      if (booksSnapshot.empty) {
+        console.log('No books found in the Books subcollection!');
+        return;
+      }
+
+      const booksData = booksSnapshot.docs.map(bookDoc => ({
+        id: bookDoc.id,
+        ...bookDoc.data(),
+      }));
+
+      console.log('Books:', booksData);
+      setBooks(booksData); 
+    });
+
+  } catch (error) {
+    console.error('Error fetching books:', error);
+  }
+};
+
+
+
+
+// Example usage:
+
+
+
+  // const getCategories = async () => {
+  //   try {
+  //     const response = await axios.get('https://themealdb.com/api/json/v1/1/categories.php');
+  //     if (response && response.data && response.data.categories) {
+  //       setCategories(response.data.categories);
+  //     }
+  //   } catch (err) {
+  //     console.log('error message', err.message);
+  //   }
+  // };
+
+
+  // const getRecipes = async (category = 'Beef') => {
+  //   console.log("Fetching recipes for category:", category);
+  //   try {
+  //     const response = await axios.get(`https://themealdb.com/api/json/v1/1/filter.php?c=${category}`);
+  //     console.log("API Response:", response.data.meals);
+  //     if (response && response.data && response.data.meals) {
+  //       console.log("Fetched meals:", response.data.meals);
+  //       setMeals(response.data.meals);
+  //     } else {
+  //       console.log("No meals found in the response");
+  //     }
+  //   } catch (err) {
+  //     console.error("Error fetching recipes:", err.message);
+  //   }
+  // };
+
+  const [activeCategory, setActiveCategory] = useState('Mahadev');
+  return (
+
+    <View style={styles.container}>
+      <StatusBar style="dark" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        {/* avatar and bell icon */}
+        <View style={styles.avatarContainer}>
+          <Image
+            source={require('../../assets/images/profile.png')}
+            style={styles.avatar}
+          />
+
+          <View>
+          <Text style={styles.avatarText}>{user.fullName}</Text>
+          <Text style={styles.avatarText2}>{user.email}</Text>
+          </View>
+           
+        </View>
+        <Modal
+        transparent
+        visible={isModalVisible}
+        animationType="slide"
+        onRequestClose={toggleModal}
+      >
+         <TouchableWithoutFeedback onPress={toggleModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Video
+              source={require('../../assets/images/mahadev-intro.mp4')} 
+              style={styles.video}
+              resizeMode="cover"
+              isLooping
+              shouldPlay
+              isMuted
+            />
+            <View style={styles.controls}>
+              <TouchableOpacity onPress={toggleModal} style={styles.controlButton}>
+                <Ionicons name="close-circle" size={30} color="white" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+
+        {/* Search Bar
+                <View style={styles.searchContainer}>
+                    <TextInput
+                        placeholder='Search any recipe here'
+                        placeholderTextColor={"#ffff"}
+                        style={{flex:1, fontSize:hp(2)}}
+                    />
+                    <MagnifyingGlassIcon size={hp(2.3)} strokeWidth={3} color={'#fff'} />
+                </View> */}
+
+        {/* Categories */}
+        <View>
+          {categoriesData.length > 0 ? (
+          <Categories categoriesData={categoriesData} handlePlayIconPress={handlePlayIconPress}  activeCategory={activeCategory} handleChangeCategory={handleChangeCategory} />
+          ) : (
+            <Text>No categories available</Text>
+          )}
+        </View>
+        {/* greetings and punchline */}
+        <View style={styles.greetingsContainer}>
+
+          <Text style={styles.greetingTextMain}>Good<Text style={{ color: '#f59e0b' }}> Reads</Text></Text>
+          <Text style={styles.greetingText}>
+            “अग्निदेव से कहा कि माघ महीने में जो भी स्त्री सबसे पहले प्रयाग में स्नान करे उसके शरीर में आप इस शक्ति को स्थित कर देना। माघ का महीना आने पर सुबह ब्रह्म मुहूर्त में सर्वप्रथम सप्तऋषियों की पत्नियां प्रयाग में स्नान करने पहुंचीं। स्नान करने के उपरांत जब उन्होंने अत्यधिक ठंड का अनुभव किया तो उनमें से छः स्त्रियां अग्नि के पास जाकर आग तापने लगीं।”
+          </Text >
+        </View>
+
+        <View>
+          <RecommnededBooks books={books} categoriesData={categoriesData} />
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  postContainer: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    backgroundColor: Colors.Primary,
-    marginTop: 10,
-    borderRadius: 10,
-    width: '95%',
-    justifyContent: 'center',
-    alignContent: 'center',
-  },
-  userInfo: {
-    marginTop: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-
-  },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 8,
-    backgroundColor: Colors.white,
-
-  },
-  userName: {
-    fontWeight: 'bold',
-    fontSize: 20,
-    color: Colors.white,
-  },
-  content: {
-    fontSize: 16,
-    marginBottom: 8,
-    fontFamily:'outfit-bold',
-    color: Colors.white,
-  },
-  pollContainer: {
-    marginBottom: 8,
-  },
-  pollOption: {
-    padding: 8,
-    borderRadius: 4,
-    marginVertical: 4,
-    backgroundColor: Colors.white,
-  },
-  votedPollOption: {
-    backgroundColor:'#7CFC00',// Color for voted options
-  },
-  pollOptionText: {
-    color: '#000000',
-  },
-  interactionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  likeText: {
-    marginRight: 16,
-    color: '#1E90FF',
-  },
-  commentInput: {
+  container: {
     flex: 1,
-    borderBottomWidth: 1,
+    backgroundColor: 'white',
+    marginTop: -120,
+  },
+  scrollViewContent: {
+    paddingBottom: 50,
+    paddingTop: hp(14),
+  },
+  avatarContainer: {
+    flexDirection: 'row',
+    justifyContent: 'start',
+    alignItems: 'center',
     marginBottom: 8,
-    marginHorizontal: 8,
-    padding: 4,
+    backgroundColor: '#FF671F',
+    padding: 20,
+    gap: 20,
+    color:'white',
+    borderBottomLeftRadius: 8, 
+    borderBottomRightRadius: 8, 
+    shadowColor: 'black',      
+    shadowOffset: {          
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 1,    
+    shadowRadius: 10,       
+
+    elevation: 5,                 
+  },
+  
+  avatar: {
+    marginTop:80,
+    height: hp(7),
+    width: hp(7),
+    borderRadius: hp(5)
+  },
+  avatarText: {
+    marginTop:80,
+    color:'white',
+    fontSize:18,
+    fontFamily:'outfit-bold'
+  },
+  avatarText2: {
+    marginTop:-4,
+    color:'white',
+    fontSize:16,
+    fontFamily:'outfit-bold',
+    opacity:0.7,
+  },
+  greetingsContainer: {
+    display:'flex',
+    marginHorizontal: 16,
+    marginBottom: 15,
+    marginTop: 15,
+    gap:10,
+  },
+  greetingText: {
+    fontSize: hp(2),
+    color: '#4B5563',
+    marginLeft:20,
+    opacity:0.65,
+    fontFamily:'outfit-medium'
+  },
+  greetingTextMain: {
+    fontSize: hp(3),
+    color: '#4B5563',
+    fontWeight: 'bold',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    backgroundColor: 'black',
+    justifyContent: 'space-between',
+    padding: 10,
+    borderRadius: 20,
+    marginHorizontal: 20,
+    paddingHorizontal: 20,
+  },
+  openButton: {
+    padding: 10,
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+  },
+  openButtonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 103, 31, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#ffff',
+    borderRadius: 15,
+    overflow: 'hidden',
+    alignItems: 'center',
+    borderColor: 'rgba(255, 255, 255, 1)',
+    borderWidth: 4,   
+  },
+  video: {
+    width: '100%',
+    height:450,
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+
+  },
+  controlButton: {
+    position:'absolute',
+    top:-440,
+    left:120,
+
   },
 });
-
-export default PostFeedScreen;
