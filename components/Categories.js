@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { Colors } from '../constants/Colors';
 export default function Categories({categoriesData, categories, activeCategory, handleChangeCategory, handlePlayIconPress }) {
   return (
     <Animated.View entering={FadeInDown.duration(800).springify()} exiting={FadeOut}>
@@ -45,6 +46,8 @@ export default function Categories({categoriesData, categories, activeCategory, 
 const styles = StyleSheet.create({
   scrollContainer: {
     paddingHorizontal: 10,
+    // backgroundColor:'rgba(128, 128, 128, 0.5)',
+    padding:5,
   },
   touchableOpacity: {
     flexDirection: 'column',

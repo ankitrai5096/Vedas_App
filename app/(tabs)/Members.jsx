@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'rea
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import { ChevronLeftIcon, ClockIcon, FireIcon } from 'react-native-heroicons/outline';
+import { ChevronLeftIcon } from 'react-native-heroicons/outline';
 import Loading from '../../components/Loading';
 import { useRoute } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
@@ -12,15 +12,15 @@ export default function Members() {
     const navigation = useNavigation();
     const route = useRoute();
     const { item } = route.params;
-    // console.log("route params", route.params)
-    // console.log("item", item)
     const [book, setBook] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setLoading(false);
-        setBook(item);
-    }, []);
+        if (item) {
+            setBook(item);
+            setLoading(false);
+        }
+    }, [item]);
 
     return (
         <ScrollView
@@ -33,7 +33,7 @@ export default function Members() {
             {/* Book Image */}
             <View style={styles.imageContainer}>
                 <Image
-                    source={{ uri: book?.thumbnail }}
+                    source={{ uri: book?.thumbnail || 'default_image_url_here' }}
                     style={styles.recipeImage}
                 />
             </View>
@@ -48,42 +48,30 @@ export default function Members() {
             {loading ? (
                 <Loading size="large" />
             ) : book ? (
-                <View style={{ paddingHorizontal: wp(4), flexDirection: 'column', justifyContent: 'space-between', paddingVertical: hp(3) }}>
+                <View style={styles.contentContainer}>
                     {/* Name and Author */}
-                    <View style={{ marginBottom: hp(2) }}>
-                        <Text style={{ fontSize: hp(3), fontWeight: 'bold', flex: 1, color: '#374151' }}>
-                            {book?.bookName}
-                        </Text>
-                        <Text style={{ fontSize: hp(2), fontWeight: '500', flex: 1, color: '#6B7280' }}>
-                            {book?.bookAuthor}
-                        </Text>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.bookName}>{book?.bookName}</Text>
+                        <Text style={styles.bookAuthor}>{book?.bookAuthor}</Text>
                     </View>
 
                     {/* Book Summary */}
-                    <View style={{ marginVertical: hp(2) }}>
-                        <Text style={{ fontSize: hp(2.5), fontWeight: 'bold', flex: 1, color:'black' }}>
-                            Book Summary
-                        </Text>
-                        <Text style={{ fontSize: hp(1.9), fontWeight: 'semibold', flex: 1, color: '#4B5563' }}>
-                            {book?.BookSummary}
-                        </Text>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.heading}>Book Summary</Text>
+                        <Text style={styles.bookSummary}>{book?.BookSummary}</Text>
                     </View>
 
                     {/* Book Details */}
-                    <View style={{ marginVertical: hp(2) }}>
-                        <Text style={{ fontSize: hp(2.5), fontWeight: 'bold', flex: 1, color: '#4B5563' }}>
-                            Book Details
-                        </Text>
-                        <Text style={{ fontSize: hp(1.9), fontWeight: 'semibold', flex: 1, color: '#4B5563' }}>
-                            {book?.BookDetail}
-                        </Text>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.heading}>Book Details</Text>
+                        <Text style={styles.bookDetail}>{book?.BookDetail}</Text>
                     </View>
+
+                    {/* Start Reading Button */}
                     <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText} >Start Reading</Text>
+                        <Text style={styles.buttonText}>Start Reading</Text>
                     </TouchableOpacity>
                 </View>
-
-
             ) : (
                 <Text>No book data available</Text>
             )}
@@ -110,24 +98,53 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 40,
     },
     backButtonContainer: {
-        width: '100%',
         position: 'absolute',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingTop: 45,
-        paddingLeft: 20,
+        top: hp(5),
+        left: wp(4),
+    },
+    contentContainer: {
+        paddingHorizontal: wp(4),
+        paddingVertical: hp(3),
+    },
+    textContainer: {
+        marginBottom: hp(2),
+    },
+    bookName: {
+        fontSize: hp(3),
+        fontWeight: 'bold',
+        color: '#374151',
+    },
+    bookAuthor: {
+        fontSize: hp(2),
+        fontWeight: '500',
+        color: '#6B7280',
+    },
+    heading: {
+        fontSize: hp(2.5),
+        fontWeight: 'bold',
+        color: '#4B5563',
+    },
+    bookSummary: {
+        fontSize: hp(1.9),
+        fontWeight: '500',
+        color: '#4B5563',
+    },
+    bookDetail: {
+        fontSize: hp(1.9),
+        fontWeight: '500',
+        color: '#4B5563',
     },
     button: {
-        color: Colors.white,
-        padding: 20,
         backgroundColor: '#FF671F',
         borderRadius: 10,
+        padding: 20,
+        width: '60%',
+        alignSelf: 'center',
         marginTop: 25,
-        width: '50%'
     },
     buttonText: {
         color: Colors.white,
-fontSize:16
-    }
+        fontSize: 16,
+        textAlign: 'center',
+    },
 });

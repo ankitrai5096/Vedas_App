@@ -10,8 +10,10 @@ export const Colors = {
 
   white:'#fff',
   Primary:'#FF671F',
-  Gray:'#7d7d7d',
+  Gray:'#4B5563',
   Input:'#F1F4FF',
+  backgroundWhite:'rgba(128, 128, 128, 0.1)',
+  backgroundLines:'rgba(128, 128, 128, 0.35)',
   light: {
     text: '#11181C',
     background: '#fff',

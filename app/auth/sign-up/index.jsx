@@ -8,6 +8,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from './../../../Configs/FirebaseConfig';
 import { doc, setDoc } from 'firebase/firestore'; // Firestore methods
 import { ScrollView, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 const SignUp = () => {
     const router = useRouter();
@@ -49,7 +50,6 @@ const SignUp = () => {
         <GestureHandlerRootView style={{ flex: 1 }}>
 
 <View style={styles.iconContainer}>
-                    <Ionicons onPress={() => router.back()} name="arrow-back-circle-outline" size={30} color="black" />
                 </View>
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
@@ -85,7 +85,7 @@ const SignUp = () => {
                         </TouchableOpacity>
 
                         <TouchableOpacity onPress={() => router.push('auth/sign-in')} style={styles.signInLink}>
-                            <Text style={styles.signInText}>Sign In</Text>
+                        <Text style={{ fontFamily: 'outfit-medium', fontSize: 15, textAlign: 'center' }}>Already have an account? <Text style={{color:'blue'}}>Sign In</Text></Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -97,12 +97,7 @@ const SignUp = () => {
 export default SignUp;
 
 const styles = StyleSheet.create({
-    iconContainer: {
-        position: 'absolute',
-        top: 60, 
-        left: 20,
-        zIndex: 1, 
-    },
+
     container: {
         flex: 1,
         padding: 30,
@@ -144,8 +139,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     signInLink: {
-        padding: 20,
-        marginTop: 10,
+        marginTop: hp(25),
         alignItems: 'center',
     },
     signInText: {
