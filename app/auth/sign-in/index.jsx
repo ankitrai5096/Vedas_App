@@ -5,18 +5,60 @@ import { useNavigation } from 'expo-router';
 import { Colors } from './../../../constants/Colors';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-import { auth } from '../../../Configs/FirebaseConfig';
+import { GoogleAuthProvider, signInWithCredential, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { auth, db } from '../../../Configs/FirebaseConfig';
 import { StatusBar } from 'expo-status-bar';
 import GoogleIcon from '../../../assets/images/icons8-google-logo-240.png'
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { doc, setDoc } from 'firebase/firestore';
+import Loading from '../../../components/Loading';
+import * as AuthSession from "expo-auth-session";
+
+
+
+//621706144606-bd9vk977v90n22u5mjm4mgitbf0sfpnk.apps.googleusercontent.com
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userInfo, setUserInfo] = useState(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   const router = useRouter();
   const navigation = useNavigation();
+
+
+
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: "621706144606-bd9vk977v90n22u5mjm4mgitbf0sfpnk.apps.googleusercontent.com",
+    webClientId : "621706144606-00pd9h5kidsnhhe5p5q7ii7fdf10vfaq.apps.googleusercontent.com",
+   
+    
+  });
+
+  console.log('Google Response:', response);
+
+  // console.log("redirecturi: it's here", redirectUri)
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      const credential = GoogleAuthProvider.credential(id_token);
+  
+      signInWithCredential(auth, credential)
+        .then((userCredential) => {
+          // Navigate to the home screen
+          router.replace('/home');
+        })
+        .catch((error) => {
+          console.error('Google sign-in error: ', error.message);
+        });
+    }
+  }, [response]);
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -51,7 +93,14 @@ const SignIn = () => {
   //   });
 
 
-
+  if (isSigningIn) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Loading size="large" color="#0000ff" />
+      </View>
+    );
+  }
+  
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
 
@@ -86,7 +135,7 @@ const SignIn = () => {
 
         <Text style={styles.orText}> --------- or ----------</Text>
 
-        <TouchableOpacity >
+        <TouchableOpacity  onPress={() => promptAsync()} >
           <View style={styles.GoogleConatiner}>
             <Image style={styles.GoogleConatinerImage} source={GoogleIcon} />
             <Text style={styles.GoogleConatinerText}> Sign In With Google</Text>

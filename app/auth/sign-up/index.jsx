@@ -34,8 +34,11 @@ const SignUp = () => {
             const user = userCredential.user;
 
             await setDoc(doc(db, 'users', user.uid), {
-                fullName,
-                email,
+                uid: user.uid,
+            fullName: fullName || "N/A",
+            email: user.email,
+            signInProvider: "Email/Password", 
+            createdAt: new Date().toISOString(),
             });
 
             ToastAndroid.show('Account created successfully', ToastAndroid.SHORT);

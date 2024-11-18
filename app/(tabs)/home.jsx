@@ -38,7 +38,7 @@ export default function HomeScreen() {
     fetchUser();
     fetchCategories();
     fetchBooksByCategory();
-  }, [2]);
+  }, []);
 
   handleChangeCategory = category => {
     fetchBooksByCategory(category);
@@ -284,15 +284,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 103, 31, 0.2)' ,
+    backgroundColor: 'rgba(255, 103, 31, 0.7)' ,
     paddingHorizontal: 15,
-    paddingVertical: 15,
-    marginTop: 15,
+    paddingVertical: 17,
+    marginTop: 10,
     gap: 20,
     color: 'white',
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
-    shadowColor: 'rgba(255, 103, 31, 0.2)',
+    shadowColor: 'rgba(255, 103, 31, 0.6)',
 
     shadowOpacity: 1,
     shadowRadius: 10,
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   //   width:hp(6),
   // },
   avatarText: {
-    color: Colors.Primary,
+    color: Colors.white,
     fontSize: 28,
     fontFamily: 'outfit-bold',
     fontWeight:'bold',
