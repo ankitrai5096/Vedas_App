@@ -7,9 +7,11 @@ import UserAvatar from 'react-native-user-avatar';
 import { Colors } from '../../constants/Colors';
 import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
+import Loading from '../../components/Loading';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
+  const [isAnimationTriggered, setIsAnimationTriggered] = useState(false);
 
   const router = useRouter();
 
@@ -30,6 +32,7 @@ const Profile = () => {
         if (querySnapshot.exists()) {
           const userData = querySnapshot.data();
           setUser(userData);
+          triggerAnimation(); 
         } else {
           console.log('No such document!');
         }
@@ -41,6 +44,14 @@ const Profile = () => {
     }
   };
 
+
+  const triggerAnimation = () => {
+    setIsAnimationTriggered(true); 
+    translateY.value = 50; 
+    opacity.value = 0.5;
+    translateY.value = withSpring(0, { damping: 12, stiffness: 100 }); 
+    opacity.value = withTiming(1, { duration: 500 });
+  };
 
 
   useFocusEffect(
@@ -61,23 +72,34 @@ const Profile = () => {
   };
 
   if (!user) {
-    return <Text>Loading...</Text>;
+    return <Loading size='large'/>;
   }
 
   return (
-    <Animated.View style={[styles.container,]}>
-      <Animated.View style={[styles.profileHeader, animatedStyle]}>
-        <UserAvatar style={styles.avatar} size={100} name={user.fullName} bgColors={[ "#5C6B73", "#A3A39D", "#4E4A47", "#D2B49F", "#6A4E23" ]} />
-        <Text style={styles.fullName}>{user.fullName}</Text>
-        <Text style={styles.email}>{user.email}</Text>
-      </Animated.View>
+    <Animated.View style={styles.container}>
+      {user && (
+        <>
+          {/* Profile Header Animation */}
+          <Animated.View style={[styles.profileHeader, animatedStyle]}>
+            <UserAvatar
+              style={styles.avatar}
+              size={100}
+              name={user.fullName}
+              bgColors={['#5C6B73', '#A3A39D', '#4E4A47', '#D2B49F', '#6A4E23']}
+            />
+            <Text style={styles.fullName}>{user.fullName}</Text>
+            <Text style={styles.email}>{user.email}</Text>
+          </Animated.View>
 
-      <Animated.View style={[styles.infoContainer, animatedStyle]}>
-        <Text style={styles.infoText}>Sign-in Provider: {user.signInProvider}</Text>
-        <Text style={styles.infoText}>Account Created: {new Date(user.createdAt).toLocaleDateString()}</Text>
-      </Animated.View>
-
-      {/* <Button title="Go to Book Details" onPress={goToBookDetails} color="#fff" /> */}
+          {/* Info Container Animation */}
+          <Animated.View style={[styles.infoContainer, animatedStyle]}>
+            <Text style={styles.infoText}>Sign-in Provider: {user.signInProvider}</Text>
+            <Text style={styles.infoText}>
+              Account Created: {new Date(user.createdAt).toLocaleDateString()}
+            </Text>
+          </Animated.View>
+        </>
+      )}
     </Animated.View>
   );
 };
@@ -88,12 +110,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor:'rgba(255, 103, 31, 0.1)',
+    backgroundColor: 'rgba(255, 103, 31, 0.2)',
   },
   profileHeader: {
     alignItems: 'center',
     marginBottom: 30,
-    backgroundColor: 'rgba(255, 103, 31, 0.6)',
+    backgroundColor: 'rgba(255, 103, 31, 0.5)',
     paddingVertical: 40,
     borderRadius: 10,
     shadowColor: '#000',
@@ -118,7 +140,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     marginVertical: 20,
-    backgroundColor: 'rgba(255, 103, 31, 0.6)',
+    backgroundColor: 'rgba(255, 103, 31, 0.5)',
     padding: 20,
     borderRadius: 8,
     shadowColor: '#000',
@@ -132,5 +154,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 });
+
 
 export default Profile;
