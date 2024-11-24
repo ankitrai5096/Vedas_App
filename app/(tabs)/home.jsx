@@ -7,7 +7,7 @@ import Categories from '../../components/Categories';
 import axios from 'axios';
 import RecommnededBooks from '../../components/RecommnededBooks';
 import { collection, getDoc, doc, getDocs, query, where } from 'firebase/firestore';
-import { auth, db } from '../../Configs/FirebaseConfig';
+import { auth, db, fireDB } from '../../Configs/FirebaseConfig';
 import { Video } from 'expo-av';
 import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,18 +15,30 @@ import { NameInitialsAvatar } from 'react-name-initials-avatar';
 import UserAvatar from 'react-native-user-avatar';
 import { Colors } from '../../constants/Colors';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 
 
 export default function HomeScreen() {
 
+  const currentUser = useSelector((state) => state.auth.user);
+  const user = auth().currentUser;
+ 
+
+
+
   const [categories, setCategories] = useState([]);
   const [meals, setMeals] = useState([]);
-  const [user, setUser] = useState({});
+  // const [user, setUser] = useState({});
   const [categoriesData, setCategoriesData] = useState([]);
   const [books, setBooks] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const playerRef = useRef(null);
+
+  const navigation = useNavigation();
+  
 
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
@@ -35,10 +47,11 @@ export default function HomeScreen() {
 
 
   useEffect(() => {
-    fetchUser();
-    fetchCategories();
-    fetchBooksByCategory();
-  }, []);
+        fetchUser();
+        fetchCategories();
+        fetchBooksByCategory();
+    console.log("current user from redux", currentUser)
+  }, [currentUser]);
 
   handleChangeCategory = category => {
     fetchBooksByCategory(category);
@@ -52,15 +65,16 @@ export default function HomeScreen() {
     toggleModal();
   }
   const fetchUser = async () => {
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
-        const querySnapshot = await getDoc(userDocRef);
 
-        if (querySnapshot.exists()) {
-          const userData = querySnapshot.data();
-          setUser(userData);
+    try {
+      if (user) {
+        const userDocRef = fireDB.collection('users').doc(currentUser.uid);
+        const documentSnapshot = await userDocRef.get();
+
+        if (documentSnapshot.exists) {
+          const userData = documentSnapshot.data();
+          // setUser(userData);
+          console.log('User data from Firestore at home page:', userData);
         } else {
           console.log('No such document!');
         }
@@ -68,115 +82,108 @@ export default function HomeScreen() {
         console.log('No user is logged in.');
       }
     } catch (error) {
-      console.error('Error fetching users: ', error);
+      console.error('Error fetching user:', error);
     }
   };
-
 
 
 
 
   const fetchCategories = async () => {
     try {
-      const storiesCategoryRef = collection(db, 'categories', 'MNfBRAvIBxnjZLxklVuQ', 'storiesCategory');
-
-      const querySnapshot = await getDocs(storiesCategoryRef);
-
-      if (querySnapshot.empty) {
-        console.log('No documents found in the storiesCategory collection!');
-        return;
+      if (user) {
+        const storiesCategoryRef = fireDB
+          .collection('categories')
+          .doc('MNfBRAvIBxnjZLxklVuQ')
+          .collection('storiesCategory');
+  
+        const querySnapshot = await storiesCategoryRef.get();
+  
+        if (querySnapshot.empty) {
+          console.log('No documents found in the storiesCategory collection!');
+          return;
+        }
+  
+        const categoriesData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+  
+        setCategoriesData(categoriesData);
+      } else {
+        console.log('No user is logged in.');
       }
-
-      const categoriesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      setCategoriesData(categoriesData);
-
     } catch (error) {
       console.error('Error fetching categories: ', error);
     }
   };
-
+  
 
 
   const fetchBooksByCategory = async (category) => {
     try {
-      const categoriesRef = collection(db, 'categories', 'MNfBRAvIBxnjZLxklVuQ', 'storiesCategory');
 
-      const categoryQuery = query(categoriesRef, where('strCategory', '==', category));
+      if (user){
 
-      const categorySnapshot = await getDocs(categoryQuery);
-
-      if (categorySnapshot.empty) {
+      
+      // Reference to the storiesCategory collection
+      const storiesCategoryRef = fireDB
+        .collection('categories')
+        .doc('MNfBRAvIBxnjZLxklVuQ')
+        .collection('storiesCategory');
+  
+      // Query to find the category
+      const categoryQuerySnapshot = await storiesCategoryRef
+        .where('strCategory', '==', category || activeCategory)
+        .get();
+  
+      if (categoryQuerySnapshot.empty) {
         console.log(`No category found for '${category}'`);
         return;
       }
-
-      // Fetch books for the selected category
-      categorySnapshot.forEach(async (categoryDoc) => {
+  
+      // Iterate over the matching categories
+      const allBooks = [];
+      for (const categoryDoc of categoryQuerySnapshot.docs) {
         console.log('Category Found:', categoryDoc.id, categoryDoc.data());
-
-        const booksRef = collection(db, 'categories', 'MNfBRAvIBxnjZLxklVuQ', 'storiesCategory', categoryDoc.id, 'Books');
-        const booksSnapshot = await getDocs(booksRef);
-
+  
+        // Reference to the Books sub-collection
+        const booksRef = storiesCategoryRef
+          .doc(categoryDoc.id)
+          .collection('Books');
+  
+        const booksSnapshot = await booksRef.get();
+  
         if (booksSnapshot.empty) {
           console.log('No books found in the Books subcollection!');
-          return;
+          continue;
         }
-
-        const booksData = booksSnapshot.docs.map(bookDoc => ({
+  
+        const booksData = booksSnapshot.docs.map((bookDoc) => ({
           id: bookDoc.id,
           ...bookDoc.data(),
         }));
-
-        console.log('Books:', booksData);
-        setBooks(booksData);
-      });
-
+  
+        allBooks.push(...booksData);
+      }
+  
+      console.log('Books:', allBooks);
+      setBooks(allBooks); // Ensure `setBooks` is properly defined in your component
+    }else{
+      console.log("user not authenticated")
+    };
     } catch (error) {
       console.error('Error fetching books:', error);
     }
   };
+  
 
 
-
-  const displayName = user.fullName || 'Unknown User'; 
-
-  // Example usage:
-
-
-
-  // const getCategories = async () => {
-  //   try {
-  //     const response = await axios.get('https://themealdb.com/api/json/v1/1/categories.php');
-  //     if (response && response.data && response.data.categories) {
-  //       setCategories(response.data.categories);
-  //     }
-  //   } catch (err) {
-  //     console.log('error message', err.message);
-  //   }
-  // };
-
-
-  // const getRecipes = async (category = 'Beef') => {
-  //   console.log("Fetching recipes for category:", category);
-  //   try {
-  //     const response = await axios.get(`https://themealdb.com/api/json/v1/1/filter.php?c=${category}`);
-  //     console.log("API Response:", response.data.meals);
-  //     if (response && response.data && response.data.meals) {
-  //       console.log("Fetched meals:", response.data.meals);
-  //       setMeals(response.data.meals);
-  //     } else {
-  //       console.log("No meals found in the response");
-  //     }
-  //   } catch (err) {
-  //     console.error("Error fetching recipes:", err.message);
-  //   }
-  // };
-
-  console.log("user name undfined or null ", user.fullName)
 
   const [activeCategory, setActiveCategory] = useState('Mahadev');
   return (
+
+    
 
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -190,11 +197,14 @@ export default function HomeScreen() {
           <Text style={styles.avatarText}>Vedas</Text>
           <View style={{flexDirection:'row', alignItems:'center', gap:5,}}>
           <MaterialIcons name="notifications-none" size={32} color="black" />
-          <UserAvatar style={styles.avatar} size={40} name={user.fullName} bgColors={[  "#5C6B73",
+          <TouchableOpacity  onPress={()=> navigation.navigate('Profile')}>
+          <UserAvatar  style={styles.avatar} size={40} name={currentUser?.displayName || 'NA'} bgColors={[  "#5C6B73",
               "#A3A39D",
               "#4E4A47",
               "#D2B49F",
               "#6A4E23" ]} />
+          </TouchableOpacity>
+         
  
           </View>
 
@@ -247,11 +257,10 @@ export default function HomeScreen() {
         {/* Categories */}
         <View style={styles.line} />
         <View>
-          {categoriesData.length > 0 ? (
-            <Categories categoriesData={categoriesData} handlePlayIconPress={handlePlayIconPress} activeCategory={activeCategory} handleChangeCategory={handleChangeCategory} />
-          ) : (
-            <Text>No categories available</Text>
-          )}
+ {categoriesData && (
+  <Categories categoriesData={categoriesData} handlePlayIconPress={handlePlayIconPress} activeCategory={activeCategory} handleChangeCategory={handleChangeCategory} />
+ )}
+            
         </View>
         {/* greetings and punchline */}
         <View style={styles.greetingsContainer}>
@@ -262,9 +271,6 @@ export default function HomeScreen() {
           </Text >
         </View>
 
-        <View>
-          <RecommnededBooks books={books} categoriesData={categoriesData} />
-        </View>
       </ScrollView>
     </View>
   );
@@ -284,15 +290,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 103, 31, 0.7)' ,
+    backgroundColor: Colors.Primary ,
     paddingHorizontal: 15,
-    paddingVertical: 17,
+    paddingVertical: 20,
     marginTop: 10,
     gap: 20,
     color: 'white',
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
-    shadowColor: 'rgba(255, 103, 31, 0.6)',
+    shadowColor: Colors.Primary,
 
     shadowOpacity: 1,
     shadowRadius: 10,

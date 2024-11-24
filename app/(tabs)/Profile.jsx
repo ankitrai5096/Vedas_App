@@ -6,43 +6,26 @@ import { auth, db } from '../../Configs/FirebaseConfig';
 import UserAvatar from 'react-native-user-avatar';
 import { Colors } from '../../constants/Colors';
 import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Loading from '../../components/Loading';
+import { useDispatch, useSelector } from 'react-redux';
 
 const Profile = () => {
+  const currentUser = useSelector((state) => state.auth.user);
   const [user, setUser] = useState(null);
   const [isAnimationTriggered, setIsAnimationTriggered] = useState(false);
+  console.log("current user in profile", currentUser)
 
   const router = useRouter();
 
   const translateY = useSharedValue(50); 
   const opacity = useSharedValue(0.5); 
+  const navigation = useNavigation();
 
   useEffect(() => {
-    fetchUser();
+    triggerAnimation(); 
   }, []);
 
-  const fetchUser = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const userDocRef = doc(db, 'users', currentUser.uid);
-        const querySnapshot = await getDoc(userDocRef);
-
-        if (querySnapshot.exists()) {
-          const userData = querySnapshot.data();
-          setUser(userData);
-          triggerAnimation(); 
-        } else {
-          console.log('No such document!');
-        }
-      } else {
-        console.log('No user is logged in.');
-      }
-    } catch (error) {
-      console.error('Error fetching user data: ', error);
-    }
-  };
 
 
   const triggerAnimation = () => {
@@ -54,6 +37,15 @@ const Profile = () => {
   };
 
 
+
+  const logout = async () => {
+    try {
+      await auth().signOut(); 
+      router.replace('/');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
   useFocusEffect(
     React.useCallback(() => {
       translateY.value = 50; 
@@ -67,36 +59,28 @@ const Profile = () => {
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
-  const goToBookDetails = () => {
-    router.push('/BooksDetails');
-  };
 
-  if (!user) {
+  if (!currentUser) {
     return <Loading size='large'/>;
   }
 
   return (
     <Animated.View style={styles.container}>
-      {user && (
+      {currentUser && (
         <>
           {/* Profile Header Animation */}
           <Animated.View style={[styles.profileHeader, animatedStyle]}>
             <UserAvatar
               style={styles.avatar}
               size={100}
-              name={user.fullName}
+              name={currentUser.displayName || "NA"}
               bgColors={['#5C6B73', '#A3A39D', '#4E4A47', '#D2B49F', '#6A4E23']}
             />
-            <Text style={styles.fullName}>{user.fullName}</Text>
-            <Text style={styles.email}>{user.email}</Text>
-          </Animated.View>
+            <Text style={styles.fullName}>{currentUser.displayName}</Text>
+            <Text style={styles.email}>{currentUser.email}</Text>
 
-          {/* Info Container Animation */}
-          <Animated.View style={[styles.infoContainer, animatedStyle]}>
-            <Text style={styles.infoText}>Sign-in Provider: {user.signInProvider}</Text>
-            <Text style={styles.infoText}>
-              Account Created: {new Date(user.createdAt).toLocaleDateString()}
-            </Text>
+
+  <Button title="Logout" onPress={logout} />
           </Animated.View>
         </>
       )}
@@ -110,12 +94,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'rgba(255, 103, 31, 0.2)',
   },
   profileHeader: {
     alignItems: 'center',
     marginBottom: 30,
-    backgroundColor: 'rgba(255, 103, 31, 0.5)',
+    backgroundColor:Colors.Primary,
     paddingVertical: 40,
     borderRadius: 10,
     shadowColor: '#000',
@@ -140,7 +123,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     marginVertical: 20,
-    backgroundColor: 'rgba(255, 103, 31, 0.5)',
+    backgroundColor: Colors.Primary,
     padding: 20,
     borderRadius: 8,
     shadowColor: '#000',

@@ -6,12 +6,14 @@ import MasonryList from '@react-native-seoul/masonry-list';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 import Loading from './Loading';
 import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 export default function RecommnededBooks({categoriesData, books}) {
+  
     const navigation = useNavigation();
     return (
         <View style={styles.container}>
-            <Text style={styles.headerText}>Reccomended Books</Text>
+            <Text style={styles.headerText}>Available Books</Text>
             <View>
                 {categoriesData.length == 0? (
                   <Loading size="large" />  
@@ -37,19 +39,22 @@ export default function RecommnededBooks({categoriesData, books}) {
 const styles = StyleSheet.create({
     container: {
         marginHorizontal: wp(4),
-        marginTop: hp(2),
+        marginTop: hp(1),
     },
     headerText: {
-        fontSize: hp(3),
+        fontSize: 24,
         fontWeight: '600',
-        color: '#4B5563', // Neutral-600 color
+        color: '#4B5563', 
         marginBottom: hp(1.5),
+        opacity:0.5,
     },
 });
 
 const RecipeCard = ({ item, index, navigation }) => {
     let isEven = index % 2 === 0;
     console.log("item before sendinf",item);
+
+    const router = useRouter();
 
     return (
         <Animated.View entering={FadeInDown.delay(index * 100).duration(600).springify().damping(12)}>
@@ -58,7 +63,7 @@ const RecipeCard = ({ item, index, navigation }) => {
                     hello.pressable,
                     { paddingLeft: isEven ? 0 : 8, paddingRight: isEven ? 8 : 0 },
                 ]}
-                onPress={()=> navigation.navigate('Members',{ item })}
+                onPress={()=>    router.push({ pathname:  "/books/bookDetails", params: item })}
             >
                 <Image
                     source={{ uri: item.thumbnail }}
@@ -87,7 +92,7 @@ const hello = StyleSheet.create({
     },
     image: {
         width: '100%',
-        borderRadius: 15,
+        borderRadius: 10,
         backgroundColor: 'rgba(0, 0, 0, 0.05)', 
     },
     text: {
@@ -97,7 +102,12 @@ const hello = StyleSheet.create({
         color: '#6B7280', 
     },
     strMeal:{
-        paddingLeft:4
+        paddingLeft:4,
+        fontSize:14,
+        fontWeight:'bold',
+        opacity:0.5,
+        marginTop:3,
+        marginBottom:5,
     }
 });
 

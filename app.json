@@ -3,6 +3,7 @@
     "name": "native-app",
     "slug": "native-app",
     "version": "1.0.0",
+    "username": "ankitrai555",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -13,13 +14,6 @@
       "backgroundColor": "#ffffff"
     },
     "platforms": ["ios", "android", "web"],
-    "auth": {
-      "google": {
-        "clientId": "621706144606-bd9vk977v90n22u5mjm4mgitbf0sfpnk.apps.googleusercontent.com",
-        "webClientId" : "621706144606-00pd9h5kidsnhhe5p5q7ii7fdf10vfaq.apps.googleusercontent.com",
-        "redirectUri": "https://auth.expo.io/@ankitrai5096/native-app"
-      }
-    },
     "ios": {
       "supportsTablet": true
     },
@@ -28,27 +22,30 @@
         "CAMERA",
         "MEDIA_LIBRARY"
       ],
+      "googleServicesFile": "google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.vedasankit"
+      "package": "com.vedasankitapp"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-router"
-    ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "eas": {
-        "projectId": "3f69c9a4-a6f1-43a3-ad23-c8de358a1415"
+        "projectId": "2c7cda67-d1c1-4522-ba9f-45377c34fc4f"
       }
-    }
+    },
+    "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "expo-router"
+    ]
   }
 }

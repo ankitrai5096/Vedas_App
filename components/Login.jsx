@@ -4,41 +4,57 @@ import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import { Video } from 'expo-av';
 import { StatusBar } from 'expo-status-bar';
-import { useIsFocused } from '@react-navigation/native'; // Import useIsFocused
+import { useIsFocused } from '@react-navigation/native'; 
+import { useSelector } from 'react-redux';
 
 const Login = () => {
+    const currentUser = useSelector((state) => state.auth.user);
     const router = useRouter();
     const videoRef = useRef(null);
-    const isFocused = useIsFocused(); // Check if the screen is focused
+    const isFocused = useIsFocused();
 
     const handleGetStarted = async () => {
         if (videoRef.current) {
-            await videoRef.current.stopAsync(); // Stop the video playback
+            await videoRef.current.stopAsync();
         }
-        router.push('auth/sign-in'); // Navigate to the sign-in screen
+        router.push('auth/sign-in');
     };
 
-    // Use useEffect to play the video again when the screen is focused
     React.useEffect(() => {
-        const playVideo = async () => {
-            if (isFocused && videoRef.current) {
-                await videoRef.current.playAsync(); // Play the video again
+        const manageVideoPlayback = async () => {
+            if (videoRef.current) {
+                if (isFocused) {
+                    await videoRef.current.playAsync();
+                } else {
+                    await videoRef.current.pauseAsync(); 
+                }
             }
         };
+        manageVideoPlayback();
+    
 
-        playVideo();
+        return () => {
+            if (videoRef.current) {
+                videoRef.current.stopAsync(); 
+            }
+        };
     }, [isFocused]);
+
+
+  
 
     return (
         <View style={{ backgroundColor: Colors.white }}>
 
 <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+
+
             <Video
-                ref={videoRef} // Attach the ref to the Video component
+                ref={videoRef} 
                 source={require('./../assets/images/mahadev-intro.mp4')}
                 resizeMode="cover"
                 isLooping
-                shouldPlay
+                shouldPlay={isFocused} 
                 style={{
                     width: '100%',
                     height: 550,

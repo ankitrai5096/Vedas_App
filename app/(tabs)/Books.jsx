@@ -1,200 +1,280 @@
-import { StyleSheet, Text, View, ScrollView, Image, Pressable } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../Configs/FirebaseConfig';
+import { View, Text, ScrollView, Image, StyleSheet, TextInput, Modal, TouchableWithoutFeedback } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { BellIcon, MagnifyingGlassIcon } from 'react-native-heroicons/outline';
+import Categories from '../../components/Categories';
+import axios from 'axios';
+import RecommnededBooks from '../../components/RecommnededBooks';
+import { collection, getDoc, doc, getDocs, query, where } from 'firebase/firestore';
+import { auth, db, fireDB } from '../../Configs/FirebaseConfig';
+import { Video } from 'expo-av';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { NameInitialsAvatar } from 'react-name-initials-avatar';
+import UserAvatar from 'react-native-user-avatar';
 import { Colors } from '../../constants/Colors';
-import Loading from '../../components/Loading';
-import MasonryList from '@react-native-seoul/masonry-list';
-import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { router } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import CategoryTags from '../../components/CategoryTags';
 
-const Chat = () => {
-  const navigation = useNavigation();
 
+export default function HomeScreen() {
+
+  const currentUser = useSelector((state) => state.auth.user);
+  const user = auth().currentUser;
+
+
+
+
+  const [categories, setCategories] = useState([]);
+  const [meals, setMeals] = useState([]);
+  // const [user, setUser] = useState({});
   const [categoriesData, setCategoriesData] = useState([]);
   const [books, setBooks] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playerRef = useRef(null);
+
+  const navigation = useNavigation();
 
 
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+    fetchBooksByCategory();
+    console.log("current user from redux", currentUser)
+  }, [currentUser]);
 
-  const fetchBooksByCategory = async (categoryId) => {
+  handleChangeCategory = category => {
+    fetchBooksByCategory(category);
+    setActiveCategory(category);
+    setBooks([]);
+
+  }
+
+
+  const fetchUser = async () => {
+
     try {
-      const booksRef = collection(
-        db,
-        'categories',
-        'MNfBRAvIBxnjZLxklVuQ',
-        'storiesCategory',
-        categoryId,
-        'Books'
-      );
-      const booksSnapshot = await getDocs(booksRef);
+      if (user) {
+        const userDocRef = fireDB.collection('users').doc(currentUser.uid);
+        const documentSnapshot = await userDocRef.get();
 
-      if (booksSnapshot.empty) {
-        console.log('No books found in the Books subcollection!');
-        return [];
+        if (documentSnapshot.exists) {
+          const userData = documentSnapshot.data();
+          // setUser(userData);
+          console.log('User data from Firestore at home page:', userData);
+        } else {
+          console.log('No such document!');
+        }
+      } else {
+        console.log('No user is logged in.');
       }
-
-      return booksSnapshot.docs.map((bookDoc) => ({
-        id: bookDoc.id,
-        ...bookDoc.data(),
-      }));
     } catch (error) {
-      console.error('Error fetching books:', error);
-      return [];
+      console.error('Error fetching user:', error);
     }
   };
 
+
+
+
   const fetchCategories = async () => {
     try {
-      const storiesCategoryRef = collection(
-        db,
-        'categories',
-        'MNfBRAvIBxnjZLxklVuQ',
-        'storiesCategory'
-      );
-      const querySnapshot = await getDocs(storiesCategoryRef);
+      if (user) {
+        const storiesCategoryRef = fireDB
+          .collection('categories')
+          .doc('MNfBRAvIBxnjZLxklVuQ')
+          .collection('storiesCategory');
 
-      if (querySnapshot.empty) {
-        console.log('No documents found in the storiesCategory collection!');
-        return;
+        const querySnapshot = await storiesCategoryRef.get();
+
+        if (querySnapshot.empty) {
+          console.log('No documents found in the storiesCategory collection!');
+          return;
+        }
+
+        const categoriesData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setCategoriesData(categoriesData);
+      } else {
+        console.log('No user is logged in.');
       }
-
-      const categoriesData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCategoriesData(categoriesData);
-
-      const allBooks = await Promise.all(
-        categoriesData.map(async (category) => {
-          const categoryBooks = await fetchBooksByCategory(category.id);
-          return categoryBooks;
-        })
-      );
-
-      setBooks(allBooks.flat());
     } catch (error) {
       console.error('Error fetching categories: ', error);
     }
   };
 
+
+
+  const fetchBooksByCategory = async (category) => {
+    try {
+
+      if (user) {
+
+
+        // Reference to the storiesCategory collection
+        const storiesCategoryRef = fireDB
+          .collection('categories')
+          .doc('MNfBRAvIBxnjZLxklVuQ')
+          .collection('storiesCategory');
+
+        // Query to find the category
+        const categoryQuerySnapshot = await storiesCategoryRef
+          .where('strCategory', '==', category || activeCategory)
+          .get();
+
+        if (categoryQuerySnapshot.empty) {
+          console.log(`No category found for '${category}'`);
+          return;
+        }
+
+        // Iterate over the matching categories
+        const allBooks = [];
+        for (const categoryDoc of categoryQuerySnapshot.docs) {
+          console.log('Category Found:', categoryDoc.id, categoryDoc.data());
+
+          // Reference to the Books sub-collection
+          const booksRef = storiesCategoryRef
+            .doc(categoryDoc.id)
+            .collection('Books');
+
+          const booksSnapshot = await booksRef.get();
+
+          if (booksSnapshot.empty) {
+            console.log('No books found in the Books subcollection!');
+            continue;
+          }
+
+          const booksData = booksSnapshot.docs.map((bookDoc) => ({
+            id: bookDoc.id,
+            ...bookDoc.data(),
+          }));
+
+          allBooks.push(...booksData);
+        }
+
+        console.log('Books:', allBooks);
+        setBooks(allBooks); // Ensure `setBooks` is properly defined in your component
+      } else {
+        console.log("user not authenticated")
+      };
+    } catch (error) {
+      console.error('Error fetching books:', error);
+    }
+  };
+
+
+
+
+  const [activeCategory, setActiveCategory] = useState('Mahadev');
   return (
+
+
+
     <View style={styles.container}>
-      <Text style={styles.greetingTextMain}>Available Books</Text>
+      <StatusBar style="dark" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
 
-      <ScrollView>
-        {categoriesData ? (
-          categoriesData.map((category) => {
-            const filteredBooks = books.filter(
-              (book) => book.strCategory === category.strCategory
-            );
 
-            // Add index manually to each book
-            const indexedBooks = filteredBooks.map((book, idx) => ({
-              ...book,
-              index: idx,
-            }));
 
-            return (
-              <Animated.View
-                key={category.id}
-                entering={FadeInDown.delay(1000).duration(600).springify().damping(12)}
-              >
-                <View>
-                  {/* Render Category Title */}
-                  <Text style={styles.categoryTitle}>{category.strCategory}</Text>
 
-                  {/* Render Masonry List for Each Category */}
-                  <MasonryList
-                    data={indexedBooks}
-                    keyExtractor={(item) => item.id}
-                    numColumns={2}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => (
-                      <Pressable
-                      onPress={() => {
-                        console.log('Pressed book:', item); 
-                        navigation.navigate('Members', { item });
-                      }}
-                    >
-                        <View style={[styles.bookContainer]}>
-                          <Image
-                            source={{ uri: item.thumbnail }}
-                            style={[
-                              styles.thumbnail,
-                              { height: item.index % 3 === 0 ? hp(22) : hp(25) },
-                            ]}
-                            resizeMode="cover"
-                          />
-                          <Text style={styles.bookName}>
-                            {item.bookName.length > 20
-                              ? `${item.bookName.slice(0, 20)}...`
-                              : item.bookName}
-                          </Text>
-                        </View>
-                      </Pressable>
 
-                    )}
-                  />
-                </View>
-              </Animated.View>
-            );
-          })
-        ) : (
-          <Loading />
-        )}
+        <View style={styles.searchContainer}>
+          <TextInput
+            placeholder='Search a book here...'
+            placeholderTextColor={"#ffff"}
+            // placeholderFontWeight={'500'}
+            style={{ flex: 1, fontSize: hp(2),fontWeight:'bold' }}
+          />
+          <MagnifyingGlassIcon size={hp(2.3)} strokeWidth={3} color={'#fff'} />
+        </View>
+
+
+        {/* Categories */}
+        <View style={styles.line} />
+        <View>
+          {categoriesData && (
+            <CategoryTags categoriesData={categoriesData} handlePlayIconPress={handlePlayIconPress} activeCategory={activeCategory} handleChangeCategory={handleChangeCategory} />
+          )}
+
+        </View>
+
+        <View>
+          <RecommnededBooks books={books} categoriesData={categoriesData} />
+        </View>
       </ScrollView>
     </View>
   );
-};
-
-export default Chat;
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-    paddingTop: 50,
-    paddingHorizontal: 10,
+
+  },
+  scrollViewContent:{
+    marginTop: 40,
   },
 
-  greetingTextMain: {
-    fontSize: hp(3),
-    fontWeight: '600',
-    color: '#4B5563',
-    marginBottom: hp(1.5),
-  },
-  categoryTitle: {
-    fontSize: hp(2),
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 2,
-    color: Colors.Primary,
-    padding: 5,
-    backgroundColor: 'rgba(255, 103, 31, 0.2)',
-    width: '28%',
-    borderRadius: 10,
-    textAlign: 'left',
-    fontFamily: 'outfit-bold',
-    marginBottom: 10,
-  },
-  bookContainer: {
-    width: wp(42),
-    marginBottom: 10,
+  searchContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 10,
+    backgroundColor: Colors.Primary,
+    justifyContent: 'space-between',
+    padding: 10,
+    borderRadius: 20,
+    marginHorizontal: 10,
+    paddingHorizontal: 20,
   },
-  thumbnail: {
-    width: wp(42),
+  openButton: {
+    padding: 10,
+    backgroundColor: '#007bff',
     borderRadius: 5,
-    backgroundColor: "rgba(255, 103, 31, 01)"
   },
-  bookName: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 5,
+  openButtonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 103, 31, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#ffff',
+    borderRadius: 15,
+    overflow: 'hidden',
+    alignItems: 'center',
+    borderColor: 'rgba(255, 255, 255, 1)',
+    borderWidth: 4,
+  },
+  video: {
+    width: '100%',
+    height: 450,
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+
+  },
+  controlButton: {
+    position: 'absolute',
+    top: -440,
+    left: 120,
+
   },
 });

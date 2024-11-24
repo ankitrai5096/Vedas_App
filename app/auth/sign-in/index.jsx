@@ -16,15 +16,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, setDoc } from 'firebase/firestore';
 import Loading from '../../../components/Loading';
 import * as AuthSession from "expo-auth-session";
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser } from '../../../utils/redux/authActions';
+
+// google sign in
+
+import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from '@react-native-google-signin/google-signin';
+
+
 
 
 
 //621706144606-bd9vk977v90n22u5mjm4mgitbf0sfpnk.apps.googleusercontent.com
 
 const SignIn = () => {
+
+
+  const dispatch = useDispatch();
+  const currentUser = useSelector((state) => state.auth.user);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [userInfo, setUserInfo] = useState(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   const router = useRouter();
@@ -33,57 +44,151 @@ const SignIn = () => {
 
 
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: "621706144606-bd9vk977v90n22u5mjm4mgitbf0sfpnk.apps.googleusercontent.com",
-    webClientId : "621706144606-00pd9h5kidsnhhe5p5q7ii7fdf10vfaq.apps.googleusercontent.com",
-   
-    
-  });
 
-  console.log('Google Response:', response);
 
-  // console.log("redirecturi: it's here", redirectUri)
 
+
+// google sign in
+
+const [userDetails, setUserDetails] = useState(null);
+
+
+  // Google Sign-In configuration
   useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
+    GoogleSignin.configure({
+      webClientId: "318451475423-oobp7eogkr3p2sob2vl7iqj6f4u95qc7.apps.googleusercontent.com",
+    });
+  }, []);
+
+  const signIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
   
-      signInWithCredential(auth, credential)
-        .then((userCredential) => {
-          // Navigate to the home screen
-          router.replace('/home');
-        })
-        .catch((error) => {
-          console.error('Google sign-in error: ', error.message);
-        });
+      await GoogleSignin.signOut();
+      const response = await GoogleSignin.signIn();
+  
+      if (response) {
+
+        // Get Google ID token
+      const { idToken } = await GoogleSignin.getTokens();
+
+      // Create a Google credential with the token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      const userCredential = await auth().signInWithCredential(googleCredential);
+
+      console.log("Firebase Sign-In Success:", userCredential.user);
+  
+      const { displayName, email, uid, photoURL } = userCredential.user;
+
+      // Dispatch only the serializable data
+      const userData = { displayName, email, uid, photoURL ,idToken};
+      console.log("Prepared User Data:", userData);
+      await AsyncStorage.setItem('@user_data', JSON.stringify(userData));
+
+        router.replace('/home');
+      } else {
+        console.log("Sign-in was canceled or no user info returned.");
+      }
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+  
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.SIGN_IN_CANCELLED:
+            console.log("Sign-in was canceled by the user.");
+            break;
+          case statusCodes.IN_PROGRESS:
+            console.log("Sign-in is already in progress.");
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            console.log("Google Play Services not available or outdated.");
+            break;
+          default:
+            console.log("An unknown error occurred.");
+        }
+      } else {
+        console.error("An unexpected error occurred:", error);
+      }
     }
-  }, [response]);
+  };
+  
+  
+
+  const storeUserData = async (user) => {
+    try {
+      const serializedUser = JSON.stringify(user);
+      await AsyncStorage.setItem('currentUser', serializedUser);
+    } catch (error) {
+      console.error("Error storing user data:", error);
+    }
+  };
+
+  const serializeUser = (firebaseUser) => {
+    if (!firebaseUser) return null;
+  
+    return {
+      uid: firebaseUser.uid,
+      displayName: firebaseUser.displayName,
+      email: firebaseUser.email,
+    };
+  };
+
+
+  
+  
+  
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, []);
 
-  const onSignIn = () => {
-    if (!email && !password) {
-      ToastAndroid.show('Enter Email & Password', ToastAndroid.BOTTOM);
-      return;
+  const onSignIn = async () => {
+    if (!email || !password) {
+        ToastAndroid.show('Enter Email & Password', ToastAndroid.SHORT);
+        return;
     }
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        router.replace('/home');
-        console.log(user);
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        if (errorCode === 'auth/invalid-credential') {
-          ToastAndroid.show('Invalid Email or Password', ToastAndroid.LONG);
-        }
-      });
-  };
 
+    try {
+
+
+      if (email && password) {
+
+        const userCredential = await auth().signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        // Optionally process or serialize user data
+        const userData = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || 'N/A',
+            photoURL: user.photoURL || null,
+        };
+
+        // Store or handle the user data (e.g., save to local storage or state)
+        console.log('User signed in:', userData);
+
+        // Navigate to the home screen
+        router.replace('/home');
+
+        ToastAndroid.show('Sign-in successful', ToastAndroid.SHORT);
+      }
+    } catch (error) {
+        const errorCode = error.code;
+        let errorMessage = 'An error occurred';
+
+        // Handle specific errors
+        if (errorCode === 'auth/invalid-email') {
+            errorMessage = 'Invalid email address';
+        } else if (errorCode === 'auth/user-not-found') {
+            errorMessage = 'User not found';
+        } else if (errorCode === 'auth/wrong-password') {
+            errorMessage = 'Incorrect password';
+        }
+
+        ToastAndroid.show(errorMessage, ToastAndroid.LONG);
+        console.error('Sign-in error:', error);
+    }
+};
 
 
 
@@ -135,7 +240,7 @@ const SignIn = () => {
 
         <Text style={styles.orText}> --------- or ----------</Text>
 
-        <TouchableOpacity  onPress={() => promptAsync()} >
+        <TouchableOpacity  onPress={() => signIn()} >
           <View style={styles.GoogleConatiner}>
             <Image style={styles.GoogleConatinerImage} source={GoogleIcon} />
             <Text style={styles.GoogleConatinerText}> Sign In With Google</Text>
@@ -147,8 +252,6 @@ const SignIn = () => {
           <Text style={{ fontFamily: 'outfit-medium', fontSize: 15, textAlign: 'center' }}>Didn't have an account? <Text style={{ color: 'blue' }}>Sign Up</Text></Text>
         </TouchableOpacity>
 
-
-        {/* <TouchableOpacity> <Text> Sign In With Google</Text> </TouchableOpacity> */}
       </View>
     </GestureHandlerRootView>
   );
