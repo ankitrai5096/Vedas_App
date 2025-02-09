@@ -18,6 +18,10 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
+import Homefeed from '../Veeds/homeFeed';
+
+
+
 
 
 export default function HomeScreen() {
@@ -267,11 +271,14 @@ export default function HomeScreen() {
 
           <Text style={styles.greetingTextMain}>Good<Text style={{ color: '#f59e0b' }}> Reads</Text></Text>
           <Text style={styles.greetingText}>
-            “अग्निदेव से कहा कि माघ महीने में जो भी स्त्री सबसे पहले प्रयाग में स्नान करे उसके शरीर में आप इस शक्ति को स्थित कर देना। माघ का महीना आने पर सुबह ब्रह्म मुहूर्त में सर्वप्रथम सप्तऋषियों की पत्नियां प्रयाग में स्नान करने पहुंचीं। स्नान करने के उपरांत जब उन्होंने अत्यधिक ठंड का अनुभव किया तो उनमें से छः स्त्रियां अग्नि के पास जाकर आग तापने लगीं।”
+            “अग्निदेव से कहा कि माघ महीने में जो भी स्त्री सबसे पहले प्रयाग में स्नान करे उसके शरीर में आप इस शक्ति को स्थित कर देना। माघ का महीना आने पर सुबह ब्रह्म मुहूर्त में सर्वप्रथम सप्तऋषियों की पत्नियां प्रयाग में स्नान करने पहुंचीं। स्नान करने के उपरांत जब उन्होंने अत्यधिक ठंड का अनुभव किया तो उनमें से छः स्त्रियां अग्नि के पास जाकर।”
           </Text >
         </View>
 
+<Homefeed/>
+
       </ScrollView>
+  
     </View>
   );
 }
@@ -348,9 +355,10 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: hp(2),
     color: '#4B5563',
-    marginLeft: 20,
+    marginLeft: 5,
     opacity: 0.65,
-    fontFamily: 'outfit-medium'
+    fontFamily: 'outfit-medium',
+    marginBottom:5,
   },
   greetingTextMain: {
     fontSize: hp(3),

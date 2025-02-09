@@ -7,8 +7,15 @@ import Loading from '../../components/Loading';
 import { useRoute } from '@react-navigation/native';
 import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import { Colors } from '../../constants/Colors';
+import { useSelector } from 'react-redux';
+import { auth, fireDB } from '../../Configs/FirebaseConfig';
+import RecommnededBooks from '../../components/RecommnededBooks';
+import YouMayAlsoLike from '../../components/YouMayAlsoLike';
 
 export default function Members() {
+
+    const currentUser = useSelector((state) => state.auth.user);
+    const user = auth().currentUser;
     const navigation = useNavigation();
     const route = useRoute();
     const router = useRouter();
@@ -17,10 +24,74 @@ export default function Members() {
     const [book, setBook] = useState(null);
     const [loading, setLoading] = useState(true);
 
+
+    const [categoriesData, setCategoriesData] = useState([]);
+    const [books, setBooks] = useState([]);
+
+
+
+    const fetchBooksByCategory = async (item) => {
+        try {
+
+            if (user && item.strCategory) {
+
+
+                // Reference to the storiesCategory collection
+                const storiesCategoryRef = fireDB
+                    .collection('categories')
+                    .doc('MNfBRAvIBxnjZLxklVuQ')
+                    .collection('storiesCategory');
+
+                // Query to find the category
+                const categoryQuerySnapshot = await storiesCategoryRef
+                    .where('strCategory', '==', item.strCategory)
+                    .get();
+
+                if (categoryQuerySnapshot.empty) {
+                    console.log(`No category found for '${item.strCategory}'`);
+                    return;
+                }
+
+                // Iterate over the matching categories
+                const allBooks = [];
+                for (const categoryDoc of categoryQuerySnapshot.docs) {
+                    console.log('Category Found:', categoryDoc.id, categoryDoc.data());
+
+                    // Reference to the Books sub-collection
+                    const booksRef = storiesCategoryRef
+                        .doc(categoryDoc.id)
+                        .collection('Books');
+
+                    const booksSnapshot = await booksRef.get();
+
+                    if (booksSnapshot.empty) {
+                        console.log('No books found in the Books subcollection!');
+                        continue;
+                    }
+
+                    const booksData = booksSnapshot.docs.map((bookDoc) => ({
+                        id: bookDoc.id,
+                        ...bookDoc.data(),
+                    }));
+
+                    allBooks.push(...booksData);
+                }
+
+                console.log('Books:', allBooks);
+                setBooks(allBooks);
+            } else {
+                console.log("user not authenticated")
+            };
+        } catch (error) {
+            console.error('Error fetching books:', error);
+        }
+    };
+
     useEffect(() => {
         if (item) {
             setBook(item);
             setLoading(false);
+            fetchBooksByCategory(item)
         }
     }, []);
 
@@ -32,23 +103,17 @@ export default function Members() {
         >
             <StatusBar style="light" />
 
-            {/* Book Image */}
+            {/* 
             <View style={styles.imageContainer}>
-            </View>
+            </View> */}
 
-            <View style={styles.imageContainer2}>
-            <Image
-                 source={{ uri: book?.thumbnail || 'default_image_url_here' }}
-                    style={styles.recipeImage}
-                />
-            </View>
-             
+
 
 
             {/* Back Button */}
             <View style={styles.backButtonContainer}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Text style={{fontWeight:'bold',color:'white'}}>{'< Go back'}</Text>
+                    <Text style={{ fontWeight: 'bold', color: 'white' }}>{'< Go back'}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -56,33 +121,49 @@ export default function Members() {
                 <Loading size="large" />
             ) : book ? (
                 <View style={styles.contentContainer}>
-                    {/* Name and Author */}
-                    <View style={styles.textContainer}>
-                        <Text style={styles.bookName}>{book?.bookName}</Text>
-                        <Text style={styles.bookAuthor}>{book?.bookAuthor}</Text>
+
+                    <View style={[styles.shadowBox, { backgroundColor: 'rgba(211, 211, 211, 0.3)', top: 108, left: 0 }]} />
+
+                    <View style={[styles.shadowBox, { backgroundColor: 'rgba(211, 211, 211, 0.5)', top: 113, left: 5 }]} />
+
+                    {/* Second Box - Background Shadow */}
+                    <View style={[styles.shadowBox, { backgroundColor: 'rgba(176, 176, 176, 0.9)', top: 118, left: 10 }]} />
+
+                    <View style={styles.imageContainer2}>
+                        <Image
+                            source={{ uri: book?.thumbnail || 'default_image_url_here' }}
+                            style={styles.recipeImage}
+                        />
+
+                        <View style={styles.textContainer}>
+                            <Text style={styles.bookName}>{book?.bookName}</Text>
+                            <Text style={styles.bookAuthor}>{book?.bookAuthor}</Text>
+                            <TouchableOpacity onPress={() =>
+                                router.push({
+                                    pathname: "/books/readingSpace",
+                                    params: { bookContent: item?.BookDetail },
+                                })
+                            } style={styles.button}>
+                                <Text style={styles.buttonText}>Start Reading</Text>
+                            </TouchableOpacity>
+                        </View>
+
                     </View>
 
-                    {/* Book Summary */}
+                    <Text style={styles.heading}>Discription</Text>
+                    <View style={styles.line} />
                     <View style={styles.textContainer}>
-                        <Text style={styles.heading}>Book Summary</Text>
                         <Text style={styles.bookSummary}>{book?.BookSummary}</Text>
                     </View>
 
-                    {/* Book Details */}
-                    {/* <View style={styles.textContainer}>
-                        <Text style={styles.heading}>Book Details</Text>
-                        <Text style={styles.bookDetail}>{book?.BookDetail}</Text>
-                    </View> */}
 
-                    {/* Start Reading Button */}
-                    <TouchableOpacity  onPress={() =>
-    router.push({
-      pathname: "/books/readingSpace",
-      params: { bookContent: item?.BookDetail },
-    })
-  }  style={styles.button}>
-                        <Text style={styles.buttonText}>Start Reading</Text>
-                    </TouchableOpacity>
+
+                    <Text style={styles.heading}>You may also like </Text>
+                    <View style={styles.line2} />
+
+                    <YouMayAlsoLike books={books} book={book} />
+
+
                 </View>
             ) : (
                 <Text>No book data available</Text>
@@ -102,23 +183,56 @@ const styles = StyleSheet.create({
     imageContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-         backgroundColor:Colors.Primary,
-         height:300,
-         borderBottomLeftRadius:20,
-         borderBottomRightRadius:20,
+        backgroundColor: Colors.Primary,
+        height: 300,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
 
     },
     imageContainer2: {
+        marginTop: 100,
         flexDirection: 'row',
-        justifyContent: 'center',
+        alignItems: 'flex-end',
+        gap: 15,
+        marginBottom: 25,
+        position: 'relative', // To layer elements inside
+    },
 
+    shadowBox: {
+        position: 'absolute',
+        width: wp(40),
+        aspectRatio: 9 / 12,
+        borderRadius: 5,
+    },
+
+    recipeImage: {
+        width: wp(40),
+        aspectRatio: 9 / 12,
+        borderRadius: 5,
+        zIndex: 10, 
+    },
+
+    line: {
+        height: 2,
+        backgroundColor: 'rgba(255, 103, 31, 0.6)',
+        width: '30%',
+        borderRadius: 10,
+        // opacity: 0.2,
+        marginTop: 5,
+    },
+    line2: {
+        height: 2,
+        backgroundColor: 'rgba(255, 103, 31, 0.6)',
+        width: '45%',
+        borderRadius: 10,
+        // opacity: 0.2,
+        marginTop: 5,
     },
     recipeImage: {
-        marginTop:-180,
-        width: wp(50),
+        width: wp(40),
         aspectRatio: 9 / 12,
-        borderRadius:10,
-        paddingBottom:50,
+        borderRadius: 5,
+
 
 
     },
@@ -130,35 +244,40 @@ const styles = StyleSheet.create({
     contentContainer: {
         paddingHorizontal: wp(4),
         paddingVertical: hp(3),
+
     },
     textContainer: {
         marginBottom: hp(2),
-        textAlign:'center'
+        textAlign: 'left',
+        // gap:10,
     },
     bookName: {
-        fontSize: hp(3.5),
+        fontSize: hp(2.5),
         fontWeight: 'bold',
         color: '#374151',
-        textAlign:'center'
+        textAlign: 'left',
+        marginBottom: 5,
     },
     bookAuthor: {
         fontSize: hp(1.8),
         fontWeight: '500',
         color: '#6B7280',
-          textAlign:'center',
-          marginTop:5,
-          opacity:0.7,
+        textAlign: 'left',
+        opacity: 0.7,
+        marginBottom: 15,
     },
     heading: {
-        fontSize: hp(2.5),
+        fontSize: hp(2.2),
+        opacity: 1,
         fontWeight: 'bold',
-        color: '#4B5563',
+        color:"rgba(255, 103, 31, 0.8)"
 
     },
     bookSummary: {
-        fontSize: hp(1.9),
+        marginTop: 10,
+        fontSize: hp(2),
+        opacity: 0.4,
         fontWeight: '500',
-        color: '#4B5563',
 
     },
     bookDetail: {
@@ -169,15 +288,16 @@ const styles = StyleSheet.create({
     },
     button: {
         backgroundColor: '#FF671F',
-        borderRadius: 10,
-        padding: 20,
-        width: '60%',
-        alignSelf: 'center',
-        marginTop: 25,
+        borderRadius: 5,
+        padding: 10,
+        width: wp(35.5),
+        alignSelf: 'left',
+        // marginTop: 25,
     },
     buttonText: {
         color: Colors.white,
-        fontSize: 16,
-        textAlign: 'center',
+        fontSize: 15,
+        textAlign: 'left',
+        fontWeight: 'bold'
     },
 });

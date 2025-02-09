@@ -1,14 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
+import Feed from '../Veeds/Feed'
 
-const Members = () => {
+const Veeds = () => {
   return (
-    <View>
-      <Text>Members</Text>
-    </View>
+   <Feed/>
   )
 }
 
-export default Members
+export default Veeds
 
 const styles = StyleSheet.create({})

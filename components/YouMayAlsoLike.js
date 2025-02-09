@@ -8,18 +8,18 @@ import Loading from './Loading';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 
-export default function RecommnededBooks({categoriesData, books}) {
+export default function YouMayAlsoLike({categoriesData, books, book}) {
   
     const navigation = useNavigation();
+    const filteredBooks = books.filter(B => B.bookName !== book.bookName);
     return (
         <View style={styles.container}>
-            <Text style={styles.headerText}>Available Books</Text>
             <View>
                 {categoriesData?.length == 0? (
                   <Loading size="large" />  
                 ) : (
                     <MasonryList
-                        data={books}
+                        data={filteredBooks}
                         keyExtractor={(item) => item}
                         numColumns={2}
                         showsVerticalScrollIndicator={false}
@@ -35,8 +35,8 @@ export default function RecommnededBooks({categoriesData, books}) {
 
 const styles = StyleSheet.create({
     container: {
-        marginHorizontal: wp(4),
-        marginTop: hp(1),
+        marginHorizontal: wp(0.5),
+        marginTop: hp(1.5),
     },
     headerText: {
         fontSize: 24,

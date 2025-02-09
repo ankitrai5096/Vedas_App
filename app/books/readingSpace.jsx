@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Dimensions, Share } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Colors } from '../../constants/Colors';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const ReadingSpace = () => {
   const item = useLocalSearchParams();
@@ -48,7 +49,7 @@ const ReadingSpace = () => {
           onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
           disabled={currentPage === 0}
         >
-          <Text style={styles.buttonText}>{"< Previous"}</Text>
+        <AntDesign name="leftcircle" size={44} color=" rgba(255, 103, 31, 0.9)" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -56,12 +57,12 @@ const ReadingSpace = () => {
           onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
           disabled={currentPage >= totalPages - 1}
         >
-          <Text style={styles.buttonText}>{" Next >"}</Text>
+         <AntDesign name="rightcircle" size={44} color=" rgba(255, 103, 31, 0.9)" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+        {/* <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
           <Text style={styles.buttonText}>Share</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flexGrow: 1,
-    marginTop:40,
+    marginTop:80,
   },
   content: {
     fontSize: 16,
@@ -87,18 +88,16 @@ const styles = StyleSheet.create({
   },
   navigationContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
     marginTop: 10,
   },
   button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    backgroundColor: Colors.Primary,
+    borderRadius: 30,
+    backgroundColor: 'white',
   },
   disabledButton: {
-    backgroundColor: Colors.backgroundLines,
+    backgroundColor:'white',
   },
   buttonText: {
     color: '#fff',

@@ -9,6 +9,7 @@ import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, withSp
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Loading from '../../components/Loading';
 import { useDispatch, useSelector } from 'react-redux';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 const Profile = () => {
   const currentUser = useSelector((state) => state.auth.user);
@@ -26,7 +27,9 @@ const Profile = () => {
     triggerAnimation(); 
   }, []);
 
-
+  const handleGetStarted = async () => {
+    router.push('verify/GetVerify');
+};
 
   const triggerAnimation = () => {
     setIsAnimationTriggered(true); 
@@ -81,6 +84,9 @@ const Profile = () => {
 
 
   <Button title="Logout" onPress={logout} />
+  <TouchableOpacity style={styles.button} onPress={handleGetStarted}>
+                    <Text style={{ color: Colors.white, fontFamily: 'outfit-regular', fontSize: 15, textAlign: 'center' }}>Get Verified</Text>
+                </TouchableOpacity>
           </Animated.View>
         </>
       )}
@@ -136,6 +142,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 10,
   },
+  button: {
+    width: '60%',
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#FF671F',
+    borderRadius: 99,
+},
 });
 
 
