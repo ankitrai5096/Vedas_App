@@ -1,0 +1,30 @@
+{
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+            {
+                "scope": "comment",
+                "settings": {
+                    "foreground": "#FFD700"
+                }
+            },
+            {
+                "scope": "comment.line",
+                "settings": {
+                    "foreground": "#FFD700"
+                }
+            },
+            {
+                "scope": "comment.block",
+                "settings": {
+                    "foreground": "#FFD700"
+                }
+            },
+            {
+                "scope": "comment.block.documentation",
+                "settings": {
+                    "foreground": "#FFD700"
+                }
+            }
+        ]
+    }
+}

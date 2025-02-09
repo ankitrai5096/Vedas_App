@@ -1,14 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
+import Feed from '../Veeds/Feed'
 
-const BooksDetails = () => {
+const Veeds = () => {
   return (
-    <View>
-      <Text>BooksDetails</Text>
-    </View>
+   <Feed/>
   )
 }
 
-export default BooksDetails
+export default Veeds
 
 const styles = StyleSheet.create({})

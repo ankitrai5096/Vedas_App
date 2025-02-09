@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useIsFocused } from '@react-navigation/native'; 
 import { useSelector } from 'react-redux';
 
-const Login = () => {
+const Post = () => {
     const currentUser = useSelector((state) => state.auth.user);
     const router = useRouter();
     const videoRef = useRef(null);
@@ -17,7 +17,7 @@ const Login = () => {
         if (videoRef.current) {
             await videoRef.current.stopAsync();
         }
-        router.push('auth/sign-in');
+        router.push('/verify/VerificationForm'); 
     };
 
     React.useEffect(() => {
@@ -51,46 +51,49 @@ const Login = () => {
 
             <Video
                 ref={videoRef} 
-                source={require('./../assets/images/mahadev-intro.mp4')}
+                source={require('../../assets/images/mahadev-intro-2.mp4')}
                 resizeMode="cover"
                 isLooping
                 shouldPlay={isFocused} 
                 style={{
                     width: '100%',
-                    height: 550,
+                    height: 700,
+                    paddingTop:50,
+                    
                 }}
             />
 
             <View style={styles.container}>
                 <View style={{ width: '100%', alignItems: 'center', marginTop: 0 }}>
-                    <Text style={{ fontSize: 25, fontFamily: 'outfit-medium', textAlign: 'center', width: '100%' }}>
-                        Join Our Community
+                    <Text style={{ fontSize: 25, fontFamily: 'outfit-medium', textAlign: 'center', width: '100%', }}>
+                        Want to be a creator?
                     </Text>
 
                     <Text style={{ fontSize: 14, fontFamily: 'outfit-regular', textAlign: 'center', width: '90%', color: Colors.Gray, marginTop: 10 }}>
-                        “पर्वत पर उन्होंने कई भागों में मानव अंगों को जन्म दिया, परंतु वह पर्वत उनके भार को सहन नहीं कर सका और उसने उन्हें गंगाजी में गिरा दिया। गंगाजी ने उन्हें जोड़ दिया पर वे उस बालक के तेज को सहन नहीं कर सकीं और उसे अपनी तरंगों में बहाकर सरकंडे के वन के निकट छोड़ दिया।”
+                        “Join our vibrant Spiritual Community and embark on a journey of growth, connection, and enlightenment! 🌟 Here, you’ll find a safe and welcoming space to explore your inner self.”
                     </Text>
                 </View>
 
                 <TouchableOpacity style={styles.button} onPress={handleGetStarted}>
-                    <Text style={{ color: Colors.white, fontFamily: 'outfit-regular', fontSize: 15, textAlign: 'center' }}>Get Started</Text>
+                    <Text style={{ color: Colors.white, fontFamily: 'outfit-regular', fontSize: 15, textAlign: 'center' }}>Get Verified</Text>
                 </TouchableOpacity>
             </View>
         </View>
     );
 };
 
-export default Login;
+export default Post;
 
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
         backgroundColor: Colors.white,
-        marginTop: -40,
+        marginTop: -200,
         padding: 30,
         height: '100%',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
+        opacity:1,
     },
     button: {
         width: '60%',
