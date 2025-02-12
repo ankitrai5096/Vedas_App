@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, Dimensions, TouchableWithoutFeedback, Text, TouchableOpacity, ToastAndroid, Platform } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableWithoutFeedback, Text, TouchableOpacity, ToastAndroid, Platform, Image } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import { Video } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
@@ -126,12 +126,9 @@ const Feed = () => {
           />
         )}
         <View style={styles.secondContainer}>
-          <UserAvatar
-            style={styles.avatar}
-            size={40}
-            name={currentUser.displayName || 'NA'}
-            bgColors={['#5C6B73', '#A3A39D', '#4E4A47', '#D2B49F', '#6A4E23']}
-          />
+  <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+              <Image style={{ width: 30, height: 30, marginHorizontal: 8 }} source={require('../../assets/images/profile-pic.png')} />
+            </TouchableOpacity>
           <View>
             <Text style={styles.fullName}>{currentUser.displayName}</Text>
             <Text style={styles.Disc}>Hello there how is it going...</Text>

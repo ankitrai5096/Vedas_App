@@ -12,7 +12,6 @@ import { Video } from 'expo-av';
 import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NameInitialsAvatar } from 'react-name-initials-avatar';
-import UserAvatar from 'react-native-user-avatar';
 import { Colors } from '../../constants/Colors';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
