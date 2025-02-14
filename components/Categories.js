@@ -13,7 +13,7 @@ export default function Categories({
 }) {
   const isLoading = !categoriesData || categoriesData.length === 0;
 
-
+//console.log(categoriesData)
   const shimmerAnim = new Animated.Value(0);
 
   React.useEffect(() => {
@@ -52,7 +52,6 @@ export default function Categories({
                   },
                 ]}
               >
-
                 <Animated.View
                   style={[
                     styles.shimmer,

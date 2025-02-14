@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native
 import { Colors } from '../constants/Colors';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import Ionicons from '@expo/vector-icons/Ionicons';
-
 export default function CategoryTags({
   categoriesData,
   categories,
@@ -12,9 +11,7 @@ export default function CategoryTags({
   handlePlayIconPress,
 }) {
   const isLoading = !categoriesData || categoriesData.length === 0;
-
   const shimmerAnim = new Animated.Value(0);
-
   React.useEffect(() => {
     Animated.loop(
       Animated.timing(shimmerAnim, {

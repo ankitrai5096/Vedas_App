@@ -18,13 +18,10 @@ import { router } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import Homefeed from '../Veeds/homeFeed';
-
-
-
-
-
+import { SafeAreaView } from 'react-native-safe-area-context';
+import YoutubeIframe from 'react-native-youtube-iframe';
+import Arti from './Arti';
 export default function HomeScreen() {
-
   const currentUser = useSelector((state) => state.auth.user);
   const user = auth().currentUser;
 
@@ -48,8 +45,14 @@ export default function HomeScreen() {
     setIsPlaying(false);
   };
 
+  const [videoUrl, setVideoUrl] = useState("bAUMuuRH99o");
+  console.log("Video url", videoUrl)
+
 
   useEffect(() => {
+    fetchUser();
+    fetchCategories();
+    fetchBooksByCategory();
     fetchUser();
     fetchCategories();
     fetchBooksByCategory();
@@ -63,20 +66,33 @@ export default function HomeScreen() {
 
   }
 
-  handlePlayIconPress = category => {
-    console.log("icon is pressed")
-    toggleModal();
-  }
+  const handlePlayIconPress = async (category) => {
+    try {
+      // Fetch the video URL for the selected category
+      const categoryRef = fireDB
+        .collection('categories')
+        .doc('MNfBRAvIBxnjZLxklVuQ')
+        .collection('storiesCategory')
+        .where('strCategory', '==', category);
+  
+      const querySnapshot = await categoryRef.get();
+      if (!querySnapshot.empty) {
+        const categoryDoc = querySnapshot.docs[0];
+        setVideoUrl(categoryDoc.data().videoUrl);
+        toggleModal();
+      }
+    } catch (error) {
+      console.error('Error fetching video:', error);
+    }
+  };
   const fetchUser = async () => {
-
     try {
       if (user) {
         const userDocRef = fireDB.collection('users').doc(currentUser.uid);
         const documentSnapshot = await userDocRef.get();
-
         if (documentSnapshot.exists) {
           const userData = documentSnapshot.data();
-          // setUser(userData);
+
           console.log('User data from Firestore at home page:', userData);
         } else {
           console.log('No such document!');
@@ -88,10 +104,6 @@ export default function HomeScreen() {
       console.error('Error fetching user:', error);
     }
   };
-
-
-
-
   const fetchCategories = async () => {
     try {
       if (user) {
@@ -100,17 +112,21 @@ export default function HomeScreen() {
           .doc('MNfBRAvIBxnjZLxklVuQ')
           .collection('storiesCategory');
 
+
         const querySnapshot = await storiesCategoryRef.get();
+
 
         if (querySnapshot.empty) {
           console.log('No documents found in the storiesCategory collection!');
           return;
         }
 
+
         const categoriesData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         }));
+
 
         setCategoriesData(categoriesData);
       } else {
@@ -120,6 +136,7 @@ export default function HomeScreen() {
       console.error('Error fetching categories: ', error);
     }
   };
+
 
 
 
@@ -183,96 +200,75 @@ export default function HomeScreen() {
 
 
 
+
   const [activeCategory, setActiveCategory] = useState('Mahadev');
-  return (
 
-
-
-    <View style={styles.container}>
-      <StatusBar style="dark" />
-      <View style={styles.avatarContainer}>
-
-        <View style={styles.avatarusername}>
-          <Text style={styles.avatarText}>Vedas</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, }}>
-            <MaterialIcons name="notifications-none" size={32} color="black" />
-            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-
-              <Image style={{ width: 30, height: 30, marginLeft: 5 }} source={require('../../assets/images/profile-pic.png')} />
-            </TouchableOpacity>
-
-
-          </View>
-
-
-        </View>
-
-
-
-
-
-      </View>
-      <Modal
-        transparent
-        visible={isModalVisible}
-        animationType="slide"
-        onRequestClose={toggleModal}
-      >
-        <TouchableWithoutFeedback onPress={toggleModal}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Video
-                source={require('../../assets/images/mahadev-intro.mp4')}
-                style={styles.video}
-                resizeMode="cover"
-                isLooping
-                shouldPlay
-                isMuted
-              />
-              <View style={styles.controls}>
-                <TouchableOpacity onPress={toggleModal} style={styles.controlButton}>
-                  <Ionicons name="close-circle" size={30} color="white" />
-                </TouchableOpacity>
-              </View>
+    return (
+      <View style={styles.container}>
+        <StatusBar style="dark" />
+        
+        {/* Header Section */}
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatarusername}>
+            <Text style={styles.avatarText}>Vedas</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <MaterialIcons name="notifications-none" size={32} color="black" />
+              <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+                <Image 
+                  style={{ width: 30, height: 30, marginLeft: 5 }} 
+                  source={require('../../assets/images/profile-pic.png')} 
+                />
+              </TouchableOpacity>
             </View>
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-
-      {/* Search Bar
-                <View style={styles.searchContainer}>
-                    <TextInput
-                        placeholder='Search any recipe here'
-                        placeholderTextColor={"#ffff"}
-                        style={{flex:1, fontSize:hp(2)}}
-                    />
-                    <MagnifyingGlassIcon size={hp(2.3)} strokeWidth={3} color={'#fff'} />
-                </View> */}
-
-      {/* Categories */}
-      <View style={styles.line} />
-      <View>
-        {categoriesData && (
-          <Categories categoriesData={categoriesData} handlePlayIconPress={handlePlayIconPress} activeCategory={activeCategory} handleChangeCategory={handleChangeCategory} />
-        )}
-
+        </View>
+  
+        {/* Video Modals */}
+  
+        <Modal
+          transparent
+          visible={isModalVisible}
+          animationType="slide"
+          onRequestClose={toggleModal}
+        >
+          <TouchableWithoutFeedback onPress={toggleModal}>
+            <View style={styles.modalOverlay}>
+              {videoUrl && <Arti videoId={videoUrl} />}
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+  
+        {/* Main Content */}
+          <View style={styles.line} />
+          
+          {/* Categories Section */}
+          <View>
+            {categoriesData && (
+              <Categories 
+                categoriesData={categoriesData} 
+                handlePlayIconPress={handlePlayIconPress} 
+                activeCategory={activeCategory} 
+                handleChangeCategory={handleChangeCategory} 
+              />
+            )}
+          </View>
+  
+          {/* Greetings Section */}
+          <View style={styles.greetingsContainer}>
+            <Text style={styles.greetingTextMain}>
+              Good<Text style={{ color: '#f59e0b' }}> Reads</Text>
+            </Text>
+            <Text style={styles.greetingText}>
+              “अग्निदेव से कहा कि माघ महीने में जो भी स्त्री सबसे पहले प्रयाग में स्नान करे उसके शरीर में आप इस शक्ति को स्थित कर देना। माघ का महीना आने पर सुबह ब्रह्म मुहूर्त में सर्वप्रथम सप्तऋषियों की पत्नियां प्रयाग में स्नान करने पहुंचीं। स्नान करने के उपरांत जब उन्होंने अत्यधिक ठंड का अनुभव किया तो उनमें से छः स्त्रियां अग्नि के पास जाकर।”
+            </Text>
+          </View>
+  
+          {/* Home Feed */}
+          <Homefeed />
       </View>
-      {/* greetings and punchline */}
-      <View style={styles.greetingsContainer}>
+    );
+  }
 
-        <Text style={styles.greetingTextMain}>Good<Text style={{ color: '#f59e0b' }}> Reads</Text></Text>
-        <Text style={styles.greetingText}>
-          “अग्निदेव से कहा कि माघ महीने में जो भी स्त्री सबसे पहले प्रयाग में स्नान करे उसके शरीर में आप इस शक्ति को स्थित कर देना। माघ का महीना आने पर सुबह ब्रह्म मुहूर्त में सर्वप्रथम सप्तऋषियों की पत्नियां प्रयाग में स्नान करने पहुंचीं। स्नान करने के उपरांत जब उन्होंने अत्यधिक ठंड का अनुभव किया तो उनमें से छः स्त्रियां अग्नि के पास जाकर।”
-        </Text >
-      </View>
-
-      <Homefeed />
-
-
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   container: {
