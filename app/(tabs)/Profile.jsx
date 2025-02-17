@@ -2,7 +2,7 @@ import { Button, StyleSheet, Text, View, Image } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../../Configs/FirebaseConfig';
+import { auth, db, fireDB } from '../../Configs/FirebaseConfig';
 import UserAvatar from 'react-native-user-avatar';
 import { Colors } from '../../constants/Colors';
 import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -25,11 +25,39 @@ const Profile = () => {
 
   useEffect(() => {
     triggerAnimation(); 
+    fetchUser()
   }, []);
 
   const handleGetStarted = async () => {
     router.push('verify/GetVerify');
 };
+
+const adminSection = async () => {
+  router.push('verify/AdminPanel');
+};
+
+
+  const fetchUser = async () => {
+
+    try {
+      if (currentUser) {
+        const userDocRef = fireDB.collection('users').doc(currentUser.uid);
+        const documentSnapshot = await userDocRef.get();
+
+        if (documentSnapshot.exists) {
+          const userData = documentSnapshot.data();
+          setUser(userData);
+          console.log('User data from Firestore at profle page:', userData);
+        } else {
+          console.log('No such document!');
+        }
+      } else {
+        console.log('No user is logged in.');
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    }
+  };
 
   const triggerAnimation = () => {
     setIsAnimationTriggered(true); 
@@ -87,6 +115,10 @@ const Profile = () => {
   <TouchableOpacity style={styles.button} onPress={handleGetStarted}>
                     <Text style={{ color: Colors.white, fontFamily: 'outfit-regular', fontSize: 15, textAlign: 'center' }}>Get Verified</Text>
                 </TouchableOpacity>
+{user && user.isAdmin && <TouchableOpacity style={styles.button} onPress={adminSection}>
+                    <Text style={{ color: Colors.white, fontFamily: 'outfit-regular', fontSize: 15, textAlign: 'center' }}>Admin Panel</Text>
+                </TouchableOpacity> }
+                
           </Animated.View>
         </>
       )}

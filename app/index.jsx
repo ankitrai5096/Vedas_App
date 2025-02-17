@@ -26,14 +26,14 @@ export default function Index() {
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged((user) => {
       if (user) {
-        console.log('User is signed in:', user);
+        // console.log('User is signed in:', user);
         setUserDetails(user);
         dispatch(setUser(user))
         
       } else {
         dispatch(setUser(null))
         setUserDetails(null)
-        console.log('No user is signed in.');
+        // console.log('No user is signed in.');
       }
     });
   

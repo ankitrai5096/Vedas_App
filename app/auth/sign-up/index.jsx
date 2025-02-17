@@ -87,7 +87,7 @@ const SignUp = () => {
                 displayName: fullName || "N/A",
                 email: user.email,
                 signInProvider: "Email/Password",
-                createdAt: fireDB.FieldValue.serverTimestamp(),
+                // createdAt: fireDB.FieldValue.serverTimestamp(),
             });
     
             ToastAndroid.show('Account created successfully', ToastAndroid.SHORT);

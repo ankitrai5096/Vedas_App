@@ -54,7 +54,7 @@ export default function HomeScreen() {
         fetchUser();
         fetchCategories();
         fetchBooksByCategory();
-    console.log("current user from redux", currentUser)
+    // console.log("current user from redux", currentUser)
   }, [currentUser]);
 
   handleChangeCategory = category => {
