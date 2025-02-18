@@ -202,7 +202,7 @@ export default function HomeScreen() {
         <View style={styles.line} />
         <View>
           {categoriesData && (
-            <CategoryTags categoriesData={categoriesData} handlePlayIconPress={handlePlayIconPress} activeCategory={activeCategory} handleChangeCategory={handleChangeCategory} />
+            <CategoryTags categoriesData={categoriesData}  activeCategory={activeCategory} handleChangeCategory={handleChangeCategory} />
           )}
 
         </View>

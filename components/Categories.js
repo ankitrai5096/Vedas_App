@@ -76,7 +76,7 @@ export default function Categories({
       ) : (
         categoriesData.map((cat, index) => (
           <TouchableOpacity
-            onPress={() => handleChangeCategory(cat.strCategory)}
+            onPress={() => handlePlayIconPress(cat.strCategory)}
             key={index}
             style={styles.touchableOpacity}
           >

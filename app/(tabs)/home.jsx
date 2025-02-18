@@ -53,7 +53,6 @@ export default function HomeScreen() {
         fetchUser();
         fetchCategories();
         fetchBooksByCategory();
-    // console.log("current user from redux", currentUser)
   }, [currentUser]);
 
   handleChangeCategory = category => {
@@ -230,7 +229,7 @@ export default function HomeScreen() {
         >
           <TouchableWithoutFeedback onPress={toggleModal}>
             <View style={styles.modalOverlay}>
-              {videoUrl && <Arti videoId={videoUrl} />}
+              {videoUrl &&  <Arti toggleModal={toggleModal} videoId={videoUrl} />}
             </View>
           </TouchableWithoutFeedback>
         </Modal>

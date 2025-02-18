@@ -97,7 +97,7 @@ const Homefeed = () => {
            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
               <Image style={{ width: 30, height: 30, marginHorizontal: 8 }} source={require('../../assets/images/profile-pic.png')} />
             </TouchableOpacity>
-          <Text style={styles.fullName}>{currentUser.displayName || "NA"}</Text>
+          {/* <Text style={styles.fullName}>{currentUser.displayName || "NA"}</Text> */}
         </View>
 
         <Video

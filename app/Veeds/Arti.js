@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import YoutubeIframe from 'react-native-youtube-iframe';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
-const Arti = ({ videoId }) => {
+const Arti = ({ videoId, toggleModal }) => {
   console.log("Video URL in the Aarti section:", videoId);
   const [playing, setPlaying] = useState(true);
 
-  if (videoId) {
-    return (
+  return (
+    <TouchableWithoutFeedback onPress={toggleModal}>
       <View style={styles.container}>
-        <View style={styles.videoContainer}>
+        {/* Prevent touch events from propagating to TouchableWithoutFeedback */}
+        <View
+          style={styles.videoContainer}
+          onStartShouldSetResponder={() => true} // Stops touch propagation
+        >
           <YoutubeIframe
             height={hp(30)}
             width={wp(90)}
@@ -28,10 +32,8 @@ const Arti = ({ videoId }) => {
           <Icon name={playing ? 'pause' : 'play'} size={wp(8)} color="white" />
         </TouchableOpacity>
       </View>
-    );
-  }
-
-  return null;
+    </TouchableWithoutFeedback>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -47,7 +49,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "white",
     width: wp(90),
-    height: hp(25.5),
+    height: hp(24.5),
   },
   iconButton: {
     marginTop: hp(2),
