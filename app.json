@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "native-app",
-    "slug": "native-app",
+    "name": "Vedas",
+    "slug": "vedas-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -31,14 +31,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "eas": {
-        "projectId": "2c7cda67-d1c1-4522-ba9f-45377c34fc4f"
+        "projectId": "f77d568b-9f1a-4307-91cb-935c5fef1e9c"
       }
     },
     "plugins": [

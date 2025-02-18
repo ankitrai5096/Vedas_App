@@ -109,9 +109,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.vedasankit'
+    namespace 'com.vedasankitapp'
     defaultConfig {
-        applicationId 'com.vedasankit'
+        applicationId 'com.vedasankitapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

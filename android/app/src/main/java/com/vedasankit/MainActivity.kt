@@ -1,4 +1,4 @@
-package com.vedasankit
+package com.vedasankitapp
 
 import android.os.Build
 import android.os.Bundle
