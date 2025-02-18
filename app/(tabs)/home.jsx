@@ -50,13 +50,10 @@ export default function HomeScreen() {
 
 
   useEffect(() => {
-    fetchUser();
-    fetchCategories();
-    fetchBooksByCategory();
-    fetchUser();
-    fetchCategories();
-    fetchBooksByCategory();
-    console.log("current user from redux", currentUser)
+        fetchUser();
+        fetchCategories();
+        fetchBooksByCategory();
+    // console.log("current user from redux", currentUser)
   }, [currentUser]);
 
   handleChangeCategory = category => {
