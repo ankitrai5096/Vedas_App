@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "318451475423",
+    "project_id": "ved-prakash-c4017",
+    "storage_bucket": "ved-prakash-c4017.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:318451475423:android:154d6b69c5aa95837ada6a",
+        "android_client_info": {
+          "package_name": "com.vedasankitapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "318451475423-e8e5oamhovvssqnbevrrp6qjchq3bo4b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vedasankitapp",
+            "certificate_hash": "413af1b6eeb703d9983e6659516ef644eb915d0a"
+          }
+        },
+        {
+          "client_id": "318451475423-oobp7eogkr3p2sob2vl7iqj6f4u95qc7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDgLMlEZuIfLxLDWWS6x6_K31xQwzz4lw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "318451475423-dd3u4bj35ao2fegmq9evv7v7a3mp3vgo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
