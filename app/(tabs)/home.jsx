@@ -20,7 +20,7 @@ import { useSelector } from 'react-redux';
 import Homefeed from '../Veeds/homeFeed';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import YoutubeIframe from 'react-native-youtube-iframe';
-import Arti from './Arti';
+import Arti from '../Veeds/Arti';
 export default function HomeScreen() {
   const currentUser = useSelector((state) => state.auth.user);
   const user = auth().currentUser;
