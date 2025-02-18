@@ -101,12 +101,9 @@ const adminSection = async () => {
         <>
           {/* Profile Header Animation */}
           <Animated.View style={[styles.profileHeader, animatedStyle]}>
-            <UserAvatar
-              style={styles.avatar}
-              size={100}
-              name={currentUser.displayName || "NA"}
-              bgColors={['#5C6B73', '#A3A39D', '#4E4A47', '#D2B49F', '#6A4E23']}
-            />
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>          
+              <Image style={{ width: 50, height: 50, marginLeft: 5 }} source={require('../../assets/images/profile-pic.png')} />
+            </TouchableOpacity>
             <Text style={styles.fullName}>{currentUser.displayName}</Text>
             <Text style={styles.email}>{currentUser.email}</Text>
 

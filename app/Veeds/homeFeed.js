@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, AppState, TouchableWithoutFeedback, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, AppState, TouchableWithoutFeedback, Text, TouchableOpacity, Image } from 'react-native';
 import { Directions, FlatList } from 'react-native-gesture-handler';
 import { Video } from 'expo-av';
 import UserAvatar from 'react-native-user-avatar';
@@ -21,25 +21,25 @@ const Homefeed = () => {
   const videoRefs = useRef([]);
   const appState = useRef(AppState.currentState);
 
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState) => {
-      if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
-        videoRefs.current.forEach(async (ref) => {
-          if (ref) {
-            try {
-              await ref.pauseAsync();
-            } catch (error) {
-              console.error('Error pausing video on app state change:', error);
-            }
-          }
-        });
-      }
-      appState.current = nextAppState;
-    };
+  // useEffect(() => {
+  //   const handleAppStateChange = (nextAppState) => {
+  //     if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
+  //       videoRefs.current.forEach(async (ref) => {
+  //         if (ref) {
+  //           try {
+  //             await ref.pauseAsync();
+  //           } catch (error) {
+  //             console.error('Error pausing video on app state change:', error);
+  //           }
+  //         }
+  //       });
+  //     }
+  //     appState.current = nextAppState;
+  //   };
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription.remove();
-  }, []);
+  //   const subscription = AppState.addEventListener('change', handleAppStateChange);
+  //   return () => subscription.remove();
+  // }, []);
 
   useEffect(() => {
     return () => {
@@ -94,13 +94,10 @@ const Homefeed = () => {
     <TouchableWithoutFeedback onPress={() => togglePlayPause(index)}>
       <View style={styles.videoContainer}>
         <View style={styles.secondConatiner}>
-          <UserAvatar
-            style={styles.avatar}
-            size={40}
-            name={currentUser.displayName || "NA"}
-            bgColors={['#5C6B73', '#A3A39D', '#4E4A47', '#D2B49F', '#6A4E23']}
-          />
-          <Text style={styles.fullName}>{currentUser.displayName}</Text>
+           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+              <Image style={{ width: 30, height: 30, marginHorizontal: 8 }} source={require('../../assets/images/profile-pic.png')} />
+            </TouchableOpacity>
+          <Text style={styles.fullName}>{currentUser.displayName || "NA"}</Text>
         </View>
 
         <Video

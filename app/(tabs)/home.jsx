@@ -12,7 +12,6 @@ import { Video } from 'expo-av';
 import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NameInitialsAvatar } from 'react-name-initials-avatar';
-import UserAvatar from 'react-native-user-avatar';
 import { Colors } from '../../constants/Colors';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
@@ -28,7 +27,7 @@ export default function HomeScreen() {
 
   const currentUser = useSelector((state) => state.auth.user);
   const user = auth().currentUser;
- 
+
 
 
 
@@ -42,7 +41,7 @@ export default function HomeScreen() {
   const playerRef = useRef(null);
 
   const navigation = useNavigation();
-  
+
 
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
@@ -100,19 +99,19 @@ export default function HomeScreen() {
           .collection('categories')
           .doc('MNfBRAvIBxnjZLxklVuQ')
           .collection('storiesCategory');
-  
+
         const querySnapshot = await storiesCategoryRef.get();
-  
+
         if (querySnapshot.empty) {
           console.log('No documents found in the storiesCategory collection!');
           return;
         }
-  
+
         const categoriesData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         }));
-  
+
         setCategoriesData(categoriesData);
       } else {
         console.log('No user is logged in.');
@@ -121,134 +120,127 @@ export default function HomeScreen() {
       console.error('Error fetching categories: ', error);
     }
   };
-  
+
 
 
   const fetchBooksByCategory = async (category) => {
     try {
 
-      if (user){
+      if (user) {
 
-      
-      // Reference to the storiesCategory collection
-      const storiesCategoryRef = fireDB
-        .collection('categories')
-        .doc('MNfBRAvIBxnjZLxklVuQ')
-        .collection('storiesCategory');
-  
-      // Query to find the category
-      const categoryQuerySnapshot = await storiesCategoryRef
-        .where('strCategory', '==', category || activeCategory)
-        .get();
-  
-      if (categoryQuerySnapshot.empty) {
-        console.log(`No category found for '${category}'`);
-        return;
-      }
-  
-      // Iterate over the matching categories
-      const allBooks = [];
-      for (const categoryDoc of categoryQuerySnapshot.docs) {
-        console.log('Category Found:', categoryDoc.id, categoryDoc.data());
-  
-        // Reference to the Books sub-collection
-        const booksRef = storiesCategoryRef
-          .doc(categoryDoc.id)
-          .collection('Books');
-  
-        const booksSnapshot = await booksRef.get();
-  
-        if (booksSnapshot.empty) {
-          console.log('No books found in the Books subcollection!');
-          continue;
+
+        // Reference to the storiesCategory collection
+        const storiesCategoryRef = fireDB
+          .collection('categories')
+          .doc('MNfBRAvIBxnjZLxklVuQ')
+          .collection('storiesCategory');
+
+        // Query to find the category
+        const categoryQuerySnapshot = await storiesCategoryRef
+          .where('strCategory', '==', category || activeCategory)
+          .get();
+
+        if (categoryQuerySnapshot.empty) {
+          console.log(`No category found for '${category}'`);
+          return;
         }
-  
-        const booksData = booksSnapshot.docs.map((bookDoc) => ({
-          id: bookDoc.id,
-          ...bookDoc.data(),
-        }));
-  
-        allBooks.push(...booksData);
-      }
-  
-      console.log('Books:', allBooks);
-      setBooks(allBooks); // Ensure `setBooks` is properly defined in your component
-    }else{
-      console.log("user not authenticated")
-    };
+
+        // Iterate over the matching categories
+        const allBooks = [];
+        for (const categoryDoc of categoryQuerySnapshot.docs) {
+          console.log('Category Found:', categoryDoc.id, categoryDoc.data());
+
+          // Reference to the Books sub-collection
+          const booksRef = storiesCategoryRef
+            .doc(categoryDoc.id)
+            .collection('Books');
+
+          const booksSnapshot = await booksRef.get();
+
+          if (booksSnapshot.empty) {
+            console.log('No books found in the Books subcollection!');
+            continue;
+          }
+
+          const booksData = booksSnapshot.docs.map((bookDoc) => ({
+            id: bookDoc.id,
+            ...bookDoc.data(),
+          }));
+
+          allBooks.push(...booksData);
+        }
+
+        console.log('Books:', allBooks);
+        setBooks(allBooks); // Ensure `setBooks` is properly defined in your component
+      } else {
+        console.log("user not authenticated")
+      };
     } catch (error) {
       console.error('Error fetching books:', error);
     }
   };
-  
+
 
 
 
   const [activeCategory, setActiveCategory] = useState('Mahadev');
   return (
 
-    
+
 
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollViewContent}
-      >
-        <View style={styles.avatarContainer}>
+      <View style={styles.avatarContainer}>
 
-          <View style={styles.avatarusername}>
+        <View style={styles.avatarusername}>
           <Text style={styles.avatarText}>Vedas</Text>
-          <View style={{flexDirection:'row', alignItems:'center', gap:5,}}>
-          <MaterialIcons name="notifications-none" size={32} color="black" />
-          <TouchableOpacity  onPress={()=> navigation.navigate('Profile')}>
-          <UserAvatar  style={styles.avatar} size={40} name={currentUser?.displayName || 'NA'} bgColors={[  "#5C6B73",
-              "#A3A39D",
-              "#4E4A47",
-              "#D2B49F",
-              "#6A4E23" ]} />
-          </TouchableOpacity>
-         
- 
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, }}>
+            <MaterialIcons name="notifications-none" size={32} color="black" />
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+
+              <Image style={{ width: 30, height: 30, marginLeft: 5 }} source={require('../../assets/images/profile-pic.png')} />
+            </TouchableOpacity>
+
+
           </View>
 
-          
-          </View>
-   
 
-         
+        </View>
 
-          
+
+
+
+
       </View>
-        <Modal
-          transparent
-          visible={isModalVisible}
-          animationType="slide"
-          onRequestClose={toggleModal}
-        >
-          <TouchableWithoutFeedback onPress={toggleModal}>
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Video
-                  source={require('../../assets/images/mahadev-intro.mp4')}
-                  style={styles.video}
-                  resizeMode="cover"
-                  isLooping
-                  shouldPlay
-                  isMuted
-                />
-                <View style={styles.controls}>
-                  <TouchableOpacity onPress={toggleModal} style={styles.controlButton}>
-                    <Ionicons name="close-circle" size={30} color="white" />
-                  </TouchableOpacity>
-                </View>
+      <Modal
+        transparent
+        visible={isModalVisible}
+        animationType="slide"
+        onRequestClose={toggleModal}
+      >
+        <TouchableWithoutFeedback onPress={toggleModal}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Video
+                source={require('../../assets/images/mahadev-intro.mp4')}
+                style={styles.video}
+                resizeMode="cover"
+                isLooping
+                shouldPlay
+                isMuted
+              />
+              <View style={styles.controls}>
+                <TouchableOpacity onPress={toggleModal} style={styles.controlButton}>
+                  <Ionicons name="close-circle" size={30} color="white" />
+                </TouchableOpacity>
               </View>
             </View>
-          </TouchableWithoutFeedback>
-        </Modal>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
 
-        {/* Search Bar
+      {/* Search Bar
                 <View style={styles.searchContainer}>
                     <TextInput
                         placeholder='Search any recipe here'
@@ -258,27 +250,26 @@ export default function HomeScreen() {
                     <MagnifyingGlassIcon size={hp(2.3)} strokeWidth={3} color={'#fff'} />
                 </View> */}
 
-        {/* Categories */}
-        <View style={styles.line} />
-        <View>
- {categoriesData && (
-  <Categories categoriesData={categoriesData} handlePlayIconPress={handlePlayIconPress} activeCategory={activeCategory} handleChangeCategory={handleChangeCategory} />
- )}
-            
-        </View>
-        {/* greetings and punchline */}
-        <View style={styles.greetingsContainer}>
+      {/* Categories */}
+      <View style={styles.line} />
+      <View>
+        {categoriesData && (
+          <Categories categoriesData={categoriesData} handlePlayIconPress={handlePlayIconPress} activeCategory={activeCategory} handleChangeCategory={handleChangeCategory} />
+        )}
 
-          <Text style={styles.greetingTextMain}>Good<Text style={{ color: '#f59e0b' }}> Reads</Text></Text>
-          <Text style={styles.greetingText}>
-            “अग्निदेव से कहा कि माघ महीने में जो भी स्त्री सबसे पहले प्रयाग में स्नान करे उसके शरीर में आप इस शक्ति को स्थित कर देना। माघ का महीना आने पर सुबह ब्रह्म मुहूर्त में सर्वप्रथम सप्तऋषियों की पत्नियां प्रयाग में स्नान करने पहुंचीं। स्नान करने के उपरांत जब उन्होंने अत्यधिक ठंड का अनुभव किया तो उनमें से छः स्त्रियां अग्नि के पास जाकर।”
-          </Text >
-        </View>
+      </View>
+      {/* greetings and punchline */}
+      <View style={styles.greetingsContainer}>
 
-<Homefeed/>
+        <Text style={styles.greetingTextMain}>Good<Text style={{ color: '#f59e0b' }}> Reads</Text></Text>
+        <Text style={styles.greetingText}>
+          “अग्निदेव से कहा कि माघ महीने में जो भी स्त्री सबसे पहले प्रयाग में स्नान करे उसके शरीर में आप इस शक्ति को स्थित कर देना। माघ का महीना आने पर सुबह ब्रह्म मुहूर्त में सर्वप्रथम सप्तऋषियों की पत्नियां प्रयाग में स्नान करने पहुंचीं। स्नान करने के उपरांत जब उन्होंने अत्यधिक ठंड का अनुभव किया तो उनमें से छः स्त्रियां अग्नि के पास जाकर।”
+        </Text >
+      </View>
 
-      </ScrollView>
-  
+      <Homefeed />
+
+
     </View>
   );
 }
@@ -287,7 +278,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-    marginTop: -120,
+    marginTop: -10,
   },
   scrollViewContent: {
     paddingBottom: 50,
@@ -297,7 +288,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.Primary ,
+    backgroundColor: Colors.Primary,
     paddingHorizontal: 15,
     paddingVertical: 20,
     marginTop: 10,
@@ -320,12 +311,12 @@ const styles = StyleSheet.create({
   // },
 
   avatarusername: {
-    marginTop:30,
-    display:'flex',
-    flexDirection:'row',
-    justifyContent:'space-between',
-    alignItems:'center',
-    width:'100%',
+    marginTop: 30,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
   },
 
   // avatar:{
@@ -336,7 +327,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 28,
     fontFamily: 'outfit-bold',
-    fontWeight:'bold',
+    fontWeight: 'bold',
   },
   avatarText2: {
     marginTop: -4,
@@ -358,7 +349,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     opacity: 0.65,
     fontFamily: 'outfit-medium',
-    marginBottom:5,
+    marginBottom: 5,
   },
   greetingTextMain: {
     fontSize: hp(3),
